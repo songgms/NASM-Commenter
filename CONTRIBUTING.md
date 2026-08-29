@@ -5,7 +5,7 @@
 ## 开发环境
 
 ```bash
-git clone <fork> nasm-commenter && cd nasm-commenter
+git clone https://github.com/songgms/NASM-Commenter.git nasm-commenter && cd nasm-commenter
 npm install
 npm run build
 npm test
