@@ -15,6 +15,7 @@ import {
   CodeAction,
   CodeActionKind,
   Command,
+  CompletionItem,
   ResponseError
 } from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
@@ -37,11 +38,14 @@ import { logger } from './utils/logger'
 import { parseDocument } from './lexer'
 import { detectABI } from './utils/abi-detector'
 import { annotateSourceEnhanced, buildEdits, buildFunctionComment } from './engine/comment-engine'
-import { buildRemoveEdits } from './engine/deduplicator'
+import { buildRemoveEdits, countAutoCommentLines, applyEditsToText } from './engine/deduplicator'
 import { createLLMAdapter } from './llm'
 import type { LLMAdapter } from './llm'
 import { hoverAt } from './lsp/hover'
 import { provideCodeActions } from './lsp/code-action'
+import { provideCompletions } from './lsp/completion'
+import { validateDocument } from './lsp/diagnostics'
+import type { DiagnosticData } from './lsp/diagnostics'
 
 export class NASMLanguageServer {
   private connection = createConnection(ProposedFeatures.all)
@@ -79,9 +83,18 @@ export class NASMLanguageServer {
   start(): void {
     this.connection.onInitialize(this.onInitialize.bind(this))
     this.documents.listen(this.connection)
+    this.documents.onDidOpen((event) => {
+      this.abiCache.delete(event.document.uri)
+      this.pushCoverage(event.document)
+      this.validateAndPush(event.document)
+    })
     this.documents.onDidChangeContent((event) => {
-      const doc = event.document
-      this.abiCache.delete(doc.uri)
+      this.abiCache.delete(event.document.uri)
+      this.validateAndPush(event.document)
+    })
+    this.documents.onDidClose((event) => {
+      this.abiCache.delete(event.document.uri)
+      void this.connection.sendDiagnostics({ uri: event.document.uri, diagnostics: [] })
     })
     this.connection.onDidChangeConfiguration((params) => {
       this.config = resolveConfig(this.extractConfigSettings(params.settings))
@@ -93,6 +106,7 @@ export class NASMLanguageServer {
     })
     this.connection.onHover(this.onHover.bind(this))
     this.connection.onCodeAction(this.onCodeAction.bind(this))
+    this.connection.onCompletion(this.onCompletion.bind(this))
     this.connection.onRequest('nasm-commenter/annotateFile', this.onAnnotateFile.bind(this))
     this.connection.onRequest('nasm-commenter/annotateSelection', this.onAnnotateSelection.bind(this))
     this.connection.onRequest('nasm-commenter/annotateFunction', this.onAnnotateFunction.bind(this))
@@ -116,7 +130,8 @@ export class NASMLanguageServer {
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Incremental,
         hoverProvider: true,
-        codeActionProvider: true
+        codeActionProvider: true,
+        completionProvider: { resolveProvider: false }
       }
     }
   }
@@ -189,6 +204,23 @@ export class NASMLanguageServer {
     })
   }
 
+  private onCompletion(params: {
+    textDocument: { uri: string }
+    position: { line: number; character: number }
+  }): CompletionItem[] {
+    const stores = this.requireStores()
+    const doc = this.documents.get(params.textDocument.uri)
+    if (doc === undefined) {
+      return []
+    }
+    const lines = doc.getText().split(/\r?\n/)
+    const lineText = lines[params.position.line] ?? ''
+    const labelNames = parseDocument(doc.getText())
+      .map((l) => l.label)
+      .filter((l): l is string => l !== undefined)
+    return provideCompletions(lineText, params.position.character, stores, labelNames)
+  }
+
   private async annotate(text: string, config: CommentConfig, range?: { startLine: number; endLine: number }): Promise<{ edits: AnnotateFileResponse['edits']; abi: ReturnType<typeof detectABI>; stats: AnnotateFileResponse['stats'] }> {
     const ann = await annotateSourceEnhanced(text, this.requireStores(), config, this.llm, range)
     const edits = buildEdits(ann.lines, ann.comments, config)
@@ -199,7 +231,7 @@ export class NASMLanguageServer {
     const doc = this.requireDoc(params.textDocument.uri)
     const config = resolveConfig({ ...this.config, ...params.config })
     const result = await this.annotate(doc.getText(), config)
-    this.pushStats(doc.uri, result.abi, result.stats)
+    this.pushCoverage(doc, applyEditsToText(doc.getText(), result.edits))
     return result
   }
 
@@ -210,7 +242,7 @@ export class NASMLanguageServer {
       startLine: params.startLine,
       endLine: params.endLine
     })
-    this.pushStats(doc.uri, result.abi, result.stats)
+    this.pushCoverage(doc, applyEditsToText(doc.getText(), result.edits))
     return result
   }
 
@@ -241,8 +273,36 @@ export class NASMLanguageServer {
     return { edits, count: edits.length }
   }
 
-  private pushStats(uri: string, abi: ReturnType<typeof detectABI>, stats: AnnotateFileResponse['stats']): void {
-    const notification: StatsNotificationParams = { uri, abi, stats }
+  /** 推送自动注释覆盖率（状态栏展示：带标记行 / 总行数）。 */
+  private pushCoverage(doc: TextDocument, text?: string): void {
+    const content = text ?? doc.getText()
+    const notification: StatsNotificationParams = {
+      uri: doc.uri,
+      abi: this.abiOf(doc),
+      stats: {
+        totalLines: content.split(/\r?\n/).length,
+        commentedLines: countAutoCommentLines(content),
+        skippedLines: 0,
+        bySource: { rule: 0, pattern: 0, context: 0, llm: 0, fallback: 0 }
+      }
+    }
     void this.connection.sendNotification('nasm-commenter/stats', notification)
+  }
+
+  /** 校验文档并推送诊断（未知指令 / 未定义跳转目标）。 */
+  private validateAndPush(doc: TextDocument): void {
+    if (this.stores === null) {
+      return
+    }
+    const diagnostics = validateDocument(doc.getText(), this.stores).map((d: DiagnosticData) => ({
+      severity: d.severity,
+      range: {
+        start: { line: d.line, character: d.character },
+        end: { line: d.line, character: d.character + d.length }
+      },
+      message: d.message,
+      source: 'nasm-commenter'
+    }))
+    void this.connection.sendDiagnostics({ uri: doc.uri, diagnostics })
   }
 }

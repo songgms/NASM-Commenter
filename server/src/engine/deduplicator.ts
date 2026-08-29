@@ -37,6 +37,33 @@ export function shouldSkip(line: string, generatedComment: string): boolean {
 }
 
 /**
+ * 统计文本中包含自动注释标记的行数（状态栏覆盖率展示用）。
+ */
+export function countAutoCommentLines(text: string): number {
+  return text.split(/\r?\n/).filter((line) => line.includes(AUTO_MARKER)).length
+}
+
+/**
+ * 将 AnnotatedEdit 应用到多行文本（与客户端 WorkspaceEdit.replace 行为一致）。
+ * 按行后序应用避免索引漂移；server 端用于模拟注释后的文本状态。
+ */
+export function applyEditsToText(text: string, edits: AnnotatedEdit[]): string {
+  const lines = text.split(/\r?\n/)
+  const sorted = [...edits].sort(
+    (a, b) => b.startLine - a.startLine || b.startCharacter - a.startCharacter
+  )
+  for (const e of sorted) {
+    const line = lines[e.startLine] ?? ''
+    if (e.startLine === e.endLine && e.startCharacter === e.endCharacter) {
+      lines[e.startLine] = line.slice(0, e.startCharacter) + e.newText + line.slice(e.startCharacter)
+    } else {
+      lines[e.startLine] = line.slice(0, e.startCharacter) + e.newText + line.slice(e.endCharacter)
+    }
+  }
+  return lines.join('\n')
+}
+
+/**
  * 构造移除该行自动注释的编辑：
  * - 纯自动注释 → 移除整个注释（含 `; `）
  * - 用户注释后追加的自动注释 → 只移除 ` [nasm-commenter] ...` 尾部

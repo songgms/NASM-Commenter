@@ -2,8 +2,9 @@
  * 测试共享工具：知识库单例、配置、编辑应用模拟。
  */
 import { loadKnowledge, buildStores } from '../server/src/knowledge'
-import type { KnowledgeStores, CommentConfig, AnnotatedEdit } from '../server/src/types'
+import type { KnowledgeStores, CommentConfig } from '../server/src/types'
 import { defaultCommentConfig } from '../server/src/utils/config-defaults'
+import { applyEditsToText } from '../server/src/engine/deduplicator'
 
 let cachedStores: KnowledgeStores | null = null
 
@@ -21,22 +22,5 @@ export function testConfig(overrides?: Partial<CommentConfig>): CommentConfig {
   return { ...base, ...overrides, llm: { ...base.llm, ...(overrides?.llm ?? {}) } }
 }
 
-/**
- * 模拟编辑器应用 AnnotatedEdit（插入/替换）到多行文本。
- * 与客户端 WorkspaceEdit.replace 行为一致：按行后序应用避免索引漂移。
- */
-export function applyEditsToText(text: string, edits: AnnotatedEdit[]): string {
-  const lines = text.split(/\r?\n/)
-  const sorted = [...edits].sort(
-    (a, b) => b.startLine - a.startLine || b.startCharacter - a.startCharacter
-  )
-  for (const e of sorted) {
-    const line = lines[e.startLine] ?? ''
-    if (e.startLine === e.endLine && e.startCharacter === e.endCharacter) {
-      lines[e.startLine] = line.slice(0, e.startCharacter) + e.newText + line.slice(e.startCharacter)
-    } else {
-      lines[e.startLine] = line.slice(0, e.startCharacter) + e.newText + line.slice(e.endCharacter)
-    }
-  }
-  return lines.join('\n')
-}
+/** 模拟编辑器应用 AnnotatedEdit（与客户端行为一致；实现见 server/src/engine/deduplicator）。 */
+export { applyEditsToText }

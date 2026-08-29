@@ -1,6 +1,10 @@
 /**
  * LSP 处理器统一出口。
  */
-export { hoverAt, instructionHover, registerHover } from './hover'
+export { hoverAt, instructionHover, registerHover, syscallHover } from './hover'
 export { provideCodeActions } from './code-action'
 export type { CodeActionData } from './code-action'
+export { provideCompletions } from './completion'
+export { validateDocument } from './diagnostics'
+export type { DiagnosticData, DiagnosticSeverityValue } from './diagnostics'
+

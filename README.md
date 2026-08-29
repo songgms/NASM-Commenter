@@ -16,7 +16,9 @@ syscall                     ; [nasm-commenter] 执行 write 系统调用输出�
 - **上下文追踪**：寄存器常量传播（含 `eax`→`rax` 别名）、栈帧识别、系统调用参数回溯
 - **惯用模式识别**：函数序言/结尾、write/exit 系统调用、strlen 扫描、计数循环等 9 种模式优先整段注释
 - **ABI 自动检测**：Linux x64 / Linux x86（int 0x80）/ macOS（0x2000000 基址），可手动指定
-- **Hover 提示**：指令语义、标志位影响、寄存器惯例
+- **Hover 提示**：指令语义、标志位影响、寄存器惯例、系统调用号 → 调用名与参数
+- **自动补全**：命令位置补全指令名（附语义说明），操作数位置补全寄存器与文档标签
+- **实时诊断**：未知指令（Hint）、跳转到未定义标签（Warning）
 - **函数块注释**：一键生成 函数名/功能/参数/返回/破坏的寄存器
 - **精确移除**：所有自动注释带 `[nasm-commenter]` 标记，可批量移除，用户手写注释不受影响
 - **可选 LLM 增强**：OpenAI 兼容端点 / Ollama 本地模型，默认关闭；仅在规则引擎无法注释时介入，失败静默回退
@@ -102,7 +104,6 @@ npm run validate:schema  # 知识库数据校验
 | 省略 Webpack，改用 `tsc -b` 项目引用双入口构建 | 教程仅要求 `npm run build` 可用；tsc 更简单可靠 |
 | 不含 `@vscode/test-electron` 真实 VSCode 集成测试 | 下载 Electron 体积大、CI 环境不可控；server 逻辑由集成测试覆盖 |
 | 系统调用表为常用子集（x64 157 条 / x86 152 条 / macOS 27 条） | 保证数据准确性；可按教程贡献指南补全 |
-| 未实现 `lsp/completion`、`lsp/diagnostics` | 文档标注为可选增强 |
 | 命令 ID 使用 `annotateFile` 等命名（非 01/04 号的 `commentRange` 等） | 遵循 07 号教程的命名与优先级规则 |
 | 测试框架为 Vitest（非 05 号的 Mocha + Chai） | 07 号教程声明的优先级裁决 |
 

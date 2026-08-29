@@ -42,7 +42,7 @@ function updateForEditor(editor: vscode.TextEditor | undefined): void {
   } else {
     const abiLabel = stats.abi === 'linux-x86' ? 'x86' : stats.abi === 'macos-x64' ? 'macOS' : 'x64'
     item.text = `$(comment) ${stats.stats.commentedLines}/${stats.stats.totalLines} · ${abiLabel}`
-    item.tooltip = `NASM Commenter：已注释 ${stats.stats.commentedLines}/${stats.stats.totalLines} 行（ABI: ${stats.abi}）`
+    item.tooltip = `NASM Commenter：自动注释覆盖 ${stats.stats.commentedLines}/${stats.stats.totalLines} 行（ABI: ${stats.abi}）`
   }
   item.show()
 }
