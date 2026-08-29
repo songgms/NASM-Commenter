@@ -1,0 +1,70 @@
+{
+  "linux-x64": {
+    "callingConvention": {
+      "parameterRegisters": ["rdi", "rsi", "rdx", "rcx", "r8", "r9"],
+      "returnRegister": "rax",
+      "syscallNumberRegister": "rax",
+      "syscallArgRegisters": ["rdi", "rsi", "rdx", "r10", "r8", "r9"],
+      "calleeSaved": ["rbx", "rbp", "r12", "r13", "r14", "r15"],
+      "callerSaved": ["rax", "rcx", "rdx", "rsi", "rdi", "r8", "r9", "r10", "r11"]
+    },
+    "registerRoles": {
+      "rax": "返回值 / 系统调用号 / 累加器",
+      "rbx": "被调用者保存基址寄存器",
+      "rcx": "第 4 参数 / 循环计数（loop 指令隐含）",
+      "rdx": "第 3 参数 / 乘除法隐含寄存器",
+      "rsi": "第 2 参数 / 串操作源指针",
+      "rdi": "第 1 参数 / 串操作目的指针",
+      "rbp": "栈帧指针（惯例保留）",
+      "rsp": "栈指针（保留）",
+      "r8": "第 5 参数",
+      "r9": "第 6 参数",
+      "r10": "系统调用第 4 参数",
+      "r11": "临时寄存器（系统调用时被内核改写）",
+      "r12": "被调用者保存",
+      "r13": "被调用者保存",
+      "r14": "被调用者保存",
+      "r15": "被调用者保存",
+      "rip": "指令指针（保留，支持 [rip+disp] 相对寻址）",
+      "al": "rax 低 8 位（串扫描 scasb 的搜索值）"
+    }
+  },
+  "linux-x86": {
+    "callingConvention": {
+      "parameterRegisters": [],
+      "returnRegister": "eax",
+      "syscallNumberRegister": "eax",
+      "syscallArgRegisters": ["ebx", "ecx", "edx", "esi", "edi", "ebp"],
+      "calleeSaved": ["ebx", "esi", "edi", "ebp"],
+      "callerSaved": ["eax", "ecx", "edx"]
+    },
+    "registerRoles": {
+      "eax": "返回值 / 系统调用号 / 累加器",
+      "ebx": "系统调用 arg1 / 被调用者保存基址",
+      "ecx": "系统调用 arg2 / 循环计数（loop 指令隐含）",
+      "edx": "系统调用 arg3 / 乘除法隐含寄存器",
+      "esi": "系统调用 arg4 / 串操作源指针",
+      "edi": "系统调用 arg5 / 串操作目的指针",
+      "ebp": "系统调用 arg6 / 栈帧指针",
+      "esp": "栈指针（保留）",
+      "eip": "指令指针（保留）"
+    }
+  },
+  "macos-x64": {
+    "callingConvention": {
+      "parameterRegisters": ["rdi", "rsi", "rdx", "rcx", "r8", "r9"],
+      "returnRegister": "rax",
+      "syscallNumberRegister": "rax",
+      "syscallArgRegisters": ["rdi", "rsi", "rdx", "r10", "r8", "r9"],
+      "calleeSaved": ["rbx", "rbp", "r12", "r13", "r14", "r15"],
+      "callerSaved": ["rax", "rcx", "rdx", "rsi", "rdi", "r8", "r9", "r10", "r11"]
+    },
+    "registerRoles": {
+      "rax": "返回值 / 系统调用号（0x2000000 + 调用号）",
+      "rdi": "第 1 参数（macOS 无参数寄存器以外的 syscall 约定差异）",
+      "rsi": "第 2 参数",
+      "rdx": "第 3 参数",
+      "rsp": "栈指针（保留，需 16 字节对齐）"
+    }
+  }
+}

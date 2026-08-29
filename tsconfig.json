@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.cache/root.tsbuildinfo"
+  },
+  "files": [],
+  "references": [
+    { "path": "./client" },
+    { "path": "./server" }
+  ]
+}

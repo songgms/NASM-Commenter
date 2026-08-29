@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "instruction-schema.json",
+  "title": "NASM 指令语义表",
+  "description": "instruction-semantics.json 的数据格式：mnemonic → 指令语义条目",
+  "type": "object",
+  "patternProperties": {
+    "^[a-z%][a-z0-9%]*$": {
+      "type": "object",
+      "required": ["summary", "description", "category", "flags_affected"],
+      "additionalProperties": false,
+      "properties": {
+        "summary": { "type": "string", "minLength": 1, "description": "简短中文名" },
+        "description": { "type": "string", "minLength": 1, "description": "详细功能说明" },
+        "category": {
+          "type": "string",
+          "enum": [
+            "data-transfer", "arithmetic", "logic", "control-flow", "stack",
+            "string", "system", "fpu", "simd", "privileged", "misc"
+          ]
+        },
+        "flags_affected": { "type": "string", "description": "受影响的标志位，如 CF,ZF 或 none" },
+        "templates": { "$ref": "#/definitions/templateTable" },
+        "templates_en": { "$ref": "#/definitions/templateTable" },
+        "detail": { "type": "string", "description": "verbose 模式附加说明" },
+        "operands_note": { "type": "string", "description": "操作数说明（Hover 用）" }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "templateTable": {
+      "type": "object",
+      "description": "操作数签名 → 注释模板；签名形如 reg,reg / reg,imm / mem,reg，支持 * 通配；空字符串表示无操作数指令",
+      "patternProperties": {
+        "^([a-z*]+(,[a-z*]+)*)?$": {
+          "type": "string",
+          "description": "模板文本；变量：{dst} {src} {imm} {mem} {label} {reg} {syscall} {count} {size} {ctx:reg:xxx}；条件：{if:dst==src}...{else}...{endif}"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

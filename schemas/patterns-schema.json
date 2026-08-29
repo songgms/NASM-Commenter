@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "patterns-schema.json",
+  "title": "NASM 多指令惯用模式",
+  "description": "patterns.json 的数据格式：模式对象数组",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["id", "name", "sequence", "comments", "comments_en", "priority", "category"],
+    "additionalProperties": false,
+    "properties": {
+      "id": { "type": "string", "minLength": 1, "description": "模式唯一标识（kebab-case）" },
+      "name": { "type": "string", "minLength": 1, "description": "模式名称" },
+      "description": { "type": "string", "description": "模式说明" },
+      "sequence": {
+        "type": "array",
+        "minItems": 1,
+        "items": { "type": "string", "description": "助记符（小写），* 通配任意单条指令" }
+      },
+      "operandConstraints": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["index", "operand"],
+          "properties": {
+            "index": { "type": "integer", "minimum": 0, "description": "序列中第几条指令" },
+            "operand": { "type": "integer", "minimum": 0, "description": "第几个操作数" },
+            "mustBe": { "type": "string", "description": "精确匹配（原始文本）" },
+            "sameAs": {
+              "type": "array",
+              "items": { "type": "integer" },
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "与 [index, operand] 处操作数相同"
+            },
+            "isRegister": { "type": "boolean" },
+            "isImmediate": { "type": "boolean" }
+          }
+        }
+      },
+      "comments": {
+        "type": "array",
+        "minItems": 1,
+        "description": "中文注释模板，长度必须与 sequence 一致",
+        "items": { "type": "string" }
+      },
+      "comments_en": {
+        "type": "array",
+        "minItems": 1,
+        "description": "英文注释模板，长度必须与 sequence 一致",
+        "items": { "type": "string" }
+      },
+      "priority": { "type": "number", "description": "越高越优先；同优先级取更长序列" },
+      "category": {
+        "type": "string",
+        "enum": ["function", "loop", "syscall", "string", "idiom"]
+      }
+    }
+  }
+}

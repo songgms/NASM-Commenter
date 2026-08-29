@@ -1,0 +1,954 @@
+{
+  "mov": {
+    "summary": "数据传送",
+    "description": "将源操作数的值复制到目标操作数",
+    "category": "data-transfer",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "将 {src} 的值复制到 {dst}",
+      "reg,imm": "将立即数 {imm} 加载到 {dst}",
+      "reg,mem": "从内存 {mem} 加载值到 {dst}",
+      "reg,label": "将标签 {label} 的地址加载到 {dst}",
+      "mem,reg": "将 {src} 的值存储到内存 {mem}",
+      "mem,imm": "将立即数 {imm} 存储到内存 {mem}"
+    },
+    "templates_en": {
+      "reg,reg": "copy {src} to {dst}",
+      "reg,imm": "load immediate {imm} into {dst}",
+      "reg,mem": "load value from memory {mem} into {dst}",
+      "mem,reg": "store {src} into memory {mem}"
+    },
+    "detail": "不影响标志位；不支持内存到内存的直接传送",
+    "operands_note": "两个操作数不能同时为内存操作数"
+  },
+  "xchg": {
+    "summary": "交换",
+    "description": "交换两个操作数的值",
+    "category": "data-transfer",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "交换 {dst} 与 {src} 的值",
+      "reg,mem": "交换 {dst} 与内存 {mem} 的值"
+    },
+    "templates_en": {
+      "reg,reg": "exchange {dst} and {src}"
+    }
+  },
+  "push": {
+    "summary": "压栈",
+    "description": "将操作数压入栈顶，rsp 减小",
+    "category": "data-transfer",
+    "flags_affected": "none",
+    "templates": {
+      "reg": "将 {dst} 压入栈（rsp 随之减小）",
+      "mem": "将内存 {mem} 的值压入栈",
+      "imm": "将立即数 {imm} 压入栈"
+    },
+    "templates_en": {
+      "reg": "push {dst} onto the stack"
+    }
+  },
+  "pop": {
+    "summary": "出栈",
+    "description": "从栈顶弹出值到操作数，rsp 增大",
+    "category": "data-transfer",
+    "flags_affected": "none",
+    "templates": {
+      "reg": "从栈弹出值到 {dst}",
+      "mem": "从栈弹出值到内存 {mem}"
+    },
+    "templates_en": {
+      "reg": "pop value from stack into {dst}"
+    }
+  },
+  "lea": {
+    "summary": "加载有效地址",
+    "description": "计算内存操作数的有效地址（不做内存访问）并加载到目标寄存器",
+    "category": "data-transfer",
+    "flags_affected": "none",
+    "templates": {
+      "reg,mem": "计算地址 {mem} 并加载到 {dst}（不访问内存内容）",
+      "reg,label": "计算标签 {label} 的地址并加载到 {dst}"
+    },
+    "templates_en": {
+      "reg,mem": "compute effective address {mem} into {dst}"
+    }
+  },
+  "movzx": {
+    "summary": "零扩展传送",
+    "description": "将源操作数高位补零后传送到目标寄存器",
+    "category": "data-transfer",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "将 {src} 零扩展后传送到 {dst}",
+      "reg,mem": "将内存 {mem} 的值零扩展后传送到 {dst}"
+    }
+  },
+  "movsx": {
+    "summary": "符号扩展传送",
+    "description": "将源操作数按符号位扩展后传送到目标寄存器",
+    "category": "data-transfer",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "将 {src} 符号扩展后传送到 {dst}",
+      "reg,mem": "将内存 {mem} 的值符号扩展后传送到 {dst}"
+    }
+  },
+  "add": {
+    "summary": "加法",
+    "description": "将源操作数加到目标操作数，结果存入目标",
+    "category": "arithmetic",
+    "flags_affected": "CF,OF,SF,ZF,AF,PF",
+    "templates": {
+      "reg,reg": "将 {src} 加到 {dst}",
+      "reg,imm": "将立即数 {imm} 加到 {dst}",
+      "reg,mem": "将内存 {mem} 的值加到 {dst}",
+      "mem,reg": "将 {src} 加到内存 {mem}",
+      "mem,imm": "将立即数 {imm} 加到内存 {mem}"
+    },
+    "templates_en": {
+      "reg,reg": "add {src} to {dst}",
+      "reg,imm": "add immediate {imm} to {dst}"
+    },
+    "detail": "溢出时置 OF，进位置 CF"
+  },
+  "sub": {
+    "summary": "减法",
+    "description": "从目标操作数减去源操作数，结果存入目标",
+    "category": "arithmetic",
+    "flags_affected": "CF,OF,SF,ZF,AF,PF",
+    "templates": {
+      "reg,reg": "从 {dst} 减去 {src}",
+      "reg,imm": "从 {dst} 减去立即数 {imm}",
+      "reg,mem": "从 {dst} 减去内存 {mem} 的值",
+      "mem,reg": "从内存 {mem} 减去 {src}",
+      "mem,imm": "从内存 {mem} 减去立即数 {imm}"
+    },
+    "templates_en": {
+      "reg,reg": "subtract {src} from {dst}",
+      "reg,imm": "subtract immediate {imm} from {dst}"
+    }
+  },
+  "inc": {
+    "summary": "自增",
+    "description": "将操作数加 1",
+    "category": "arithmetic",
+    "flags_affected": "OF,SF,ZF,AF,PF",
+    "templates": {
+      "reg": "{dst} 加 1",
+      "mem": "内存 {mem} 的值加 1"
+    },
+    "templates_en": {
+      "reg": "increment {dst}"
+    }
+  },
+  "dec": {
+    "summary": "自减",
+    "description": "将操作数减 1",
+    "category": "arithmetic",
+    "flags_affected": "OF,SF,ZF,AF,PF",
+    "templates": {
+      "reg": "{dst} 减 1",
+      "mem": "内存 {mem} 的值减 1"
+    },
+    "templates_en": {
+      "reg": "decrement {dst}"
+    }
+  },
+  "neg": {
+    "summary": "取负",
+    "description": "将操作数变为其二补数（0 - 操作数）",
+    "category": "arithmetic",
+    "flags_affected": "CF,OF,SF,ZF,AF,PF",
+    "templates": {
+      "reg": "{dst} 取负（0 - {dst}）",
+      "mem": "内存 {mem} 的值取负"
+    }
+  },
+  "cmp": {
+    "summary": "比较",
+    "description": "计算目标 - 源并设置标志位，不保存结果",
+    "category": "arithmetic",
+    "flags_affected": "CF,OF,SF,ZF,AF,PF",
+    "templates": {
+      "reg,reg": "比较 {dst} 与 {src}（设置标志位，不保存结果）",
+      "reg,imm": "比较 {dst} 与立即数 {imm}（设置标志位）",
+      "reg,mem": "比较 {dst} 与内存 {mem} 的值",
+      "mem,imm": "比较内存 {mem} 与立即数 {imm}"
+    },
+    "templates_en": {
+      "reg,reg": "compare {dst} with {src} (flags only)",
+      "reg,imm": "compare {dst} with immediate {imm}"
+    },
+    "detail": "常与条件跳转（je/jne/jg 等）配合使用"
+  },
+  "mul": {
+    "summary": "无符号乘法",
+    "description": "ax/eax/rax 与操作数相乘，结果高半部分在 rdx、低半部分在 rax",
+    "category": "arithmetic",
+    "flags_affected": "CF,OF",
+    "templates": {
+      "reg": "无符号乘法：rax = rax × {dst}（高半在 rdx，低半在 rax）",
+      "mem": "无符号乘法：rax = rax × 内存 {mem}（高半在 rdx，低半在 rax）"
+    },
+    "operands_note": "隐含使用 rax/rdx"
+  },
+  "imul": {
+    "summary": "有符号乘法",
+    "description": "有符号乘法；单操作数形式结果高半在 rdx、低半在 rax",
+    "category": "arithmetic",
+    "flags_affected": "CF,OF",
+    "templates": {
+      "reg": "有符号乘法：rax = rax × {dst}（高半在 rdx，低半在 rax）",
+      "reg,reg": "{dst} = {dst} × {src}（有符号）",
+      "reg,imm": "{dst} = {dst} × {imm}（有符号）",
+      "reg,reg,imm": "{dst} = {src} × {imm}（有符号）"
+    },
+    "operands_note": "单操作数形式隐含使用 rax/rdx"
+  },
+  "div": {
+    "summary": "无符号除法",
+    "description": "rdx:rax 除以操作数，商在 rax、余数在 rdx",
+    "category": "arithmetic",
+    "flags_affected": "undefined",
+    "templates": {
+      "reg": "无符号除法：rax ÷ {dst}，商在 rax、余数在 rdx",
+      "mem": "无符号除法：rax ÷ 内存 {mem}，商在 rax、余数在 rdx"
+    },
+    "operands_note": "隐含使用 rax/rdx；除数为 0 触发 #DE 异常"
+  },
+  "idiv": {
+    "summary": "有符号除法",
+    "description": "rdx:rax 除以操作数（有符号），商在 rax、余数在 rdx",
+    "category": "arithmetic",
+    "flags_affected": "undefined",
+    "templates": {
+      "reg": "有符号除法：rax ÷ {dst}，商在 rax、余数在 rdx",
+      "mem": "有符号除法：rax ÷ 内存 {mem}，商在 rax、余数在 rdx"
+    },
+    "operands_note": "隐含使用 rax/rdx；除数为 0 或商溢出触发 #DE 异常"
+  },
+  "and": {
+    "summary": "按位与",
+    "description": "对两个操作数执行按位与，结果存入目标",
+    "category": "logic",
+    "flags_affected": "CF=0,OF=0,SF,ZF,PF",
+    "templates": {
+      "reg,reg": "对 {dst} 与 {src} 执行按位与，结果存入 {dst}",
+      "reg,imm": "对 {dst} 与 {imm} 执行按位与，结果存入 {dst}",
+      "mem,imm": "对内存 {mem} 与 {imm} 执行按位与"
+    },
+    "templates_en": {
+      "reg,reg": "bitwise AND {src} into {dst}",
+      "reg,imm": "bitwise AND {imm} into {dst}"
+    }
+  },
+  "or": {
+    "summary": "按位或",
+    "description": "对两个操作数执行按位或，结果存入目标",
+    "category": "logic",
+    "flags_affected": "CF=0,OF=0,SF,ZF,PF",
+    "templates": {
+      "reg,reg": "对 {dst} 与 {src} 执行按位或，结果存入 {dst}",
+      "reg,imm": "对 {dst} 与 {imm} 执行按位或，结果存入 {dst}",
+      "mem,imm": "对内存 {mem} 与 {imm} 执行按位或"
+    },
+    "templates_en": {
+      "reg,reg": "bitwise OR {src} into {dst}",
+      "reg,imm": "bitwise OR {imm} into {dst}"
+    }
+  },
+  "xor": {
+    "summary": "按位异或",
+    "description": "对两个操作数执行按位异或，结果存入目标",
+    "category": "logic",
+    "flags_affected": "CF=0,OF=0,SF,ZF,PF",
+    "templates": {
+      "reg,reg": "{if:dst==src}{dst} 清零（自身异或）{else}对 {dst} 与 {src} 执行按位异或，结果存入 {dst}{endif}",
+      "reg,imm": "对 {dst} 与 {imm} 执行按位异或，结果存入 {dst}",
+      "mem,imm": "对内存 {mem} 与 {imm} 执行按位异或"
+    },
+    "templates_en": {
+      "reg,imm": "bitwise XOR {imm} into {dst}"
+    },
+    "detail": "reg xor reg 是清零寄存器的惯用写法（比 mov 更短）"
+  },
+  "not": {
+    "summary": "按位取反",
+    "description": "将操作数按位取反（一补数）",
+    "category": "logic",
+    "flags_affected": "none",
+    "templates": {
+      "reg": "{dst} 按位取反",
+      "mem": "内存 {mem} 的值按位取反"
+    }
+  },
+  "test": {
+    "summary": "按位与测试",
+    "description": "计算两个操作数的按位与并设置标志位，不保存结果",
+    "category": "logic",
+    "flags_affected": "CF=0,OF=0,SF,ZF,PF",
+    "templates": {
+      "reg,reg": "按位与测试 {dst} 与 {src}（设置标志位，不保存结果）",
+      "reg,imm": "按位与测试 {dst} 与 {imm}（设置标志位）"
+    },
+    "detail": "test reg,reg 常用于判断寄存器是否为 0"
+  },
+  "shl": {
+    "summary": "逻辑左移",
+    "description": "将目标左移，低位补 0，最高位移入 CF",
+    "category": "logic",
+    "flags_affected": "CF,OF,SF,ZF,PF",
+    "templates": {
+      "reg,imm": "将 {dst} 左移 {imm} 位（低位补 0）",
+      "reg,reg": "将 {dst} 左移（移位位数由 {src} 给出）",
+      "mem,imm": "将内存 {mem} 左移 {imm} 位"
+    }
+  },
+  "shr": {
+    "summary": "逻辑右移",
+    "description": "将目标右移，高位补 0，最低位移入 CF",
+    "category": "logic",
+    "flags_affected": "CF,OF,SF,ZF,PF",
+    "templates": {
+      "reg,imm": "将 {dst} 逻辑右移 {imm} 位（高位补 0）",
+      "reg,reg": "将 {dst} 逻辑右移（移位位数由 {src} 给出）",
+      "mem,imm": "将内存 {mem} 逻辑右移 {imm} 位"
+    }
+  },
+  "sar": {
+    "summary": "算术右移",
+    "description": "将目标右移，高位补符号位（保持符号）",
+    "category": "logic",
+    "flags_affected": "CF,OF,SF,ZF,PF",
+    "templates": {
+      "reg,imm": "将 {dst} 算术右移 {imm} 位（高位补符号位）",
+      "reg,reg": "将 {dst} 算术右移（移位位数由 {src} 给出）",
+      "mem,imm": "将内存 {mem} 算术右移 {imm} 位"
+    }
+  },
+  "rol": {
+    "summary": "循环左移",
+    "description": "将目标循环左移，移出的位绕回低位",
+    "category": "logic",
+    "flags_affected": "CF,OF",
+    "templates": {
+      "reg,imm": "将 {dst} 循环左移 {imm} 位",
+      "reg,reg": "将 {dst} 循环左移（位数由 {src} 给出）"
+    }
+  },
+  "ror": {
+    "summary": "循环右移",
+    "description": "将目标循环右移，移出的位绕回高位",
+    "category": "logic",
+    "flags_affected": "CF,OF",
+    "templates": {
+      "reg,imm": "将 {dst} 循环右移 {imm} 位",
+      "reg,reg": "将 {dst} 循环右移（位数由 {src} 给出）"
+    }
+  },
+  "jmp": {
+    "summary": "无条件跳转",
+    "description": "无条件跳转到目标地址",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "无条件跳转到 {label}",
+      "reg": "间接跳转到 {dst} 中保存的地址",
+      "mem": "间接跳转到内存 {mem} 中保存的地址"
+    },
+    "templates_en": {
+      "label": "jump unconditionally to {label}"
+    }
+  },
+  "je": {
+    "summary": "相等跳转",
+    "description": "ZF=1（相等/结果为零）时跳转",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "相等（ZF=1）时跳转到 {label}"
+    },
+    "templates_en": {
+      "label": "jump to {label} if equal (ZF=1)"
+    },
+    "operands_note": "jz 为其同义助记符"
+  },
+  "jne": {
+    "summary": "不等跳转",
+    "description": "ZF=0（不相等/结果非零）时跳转",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "不相等（ZF=0）时跳转到 {label}"
+    },
+    "templates_en": {
+      "label": "jump to {label} if not equal (ZF=0)"
+    },
+    "operands_note": "jnz 为其同义助记符"
+  },
+  "jz": {
+    "summary": "零跳转",
+    "description": "ZF=1 时跳转（je 的同义助记符）",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "结果为零（ZF=1）时跳转到 {label}"
+    }
+  },
+  "jnz": {
+    "summary": "非零跳转",
+    "description": "ZF=0 时跳转（jne 的同义助记符）",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "结果非零（ZF=0）时跳转到 {label}"
+    }
+  },
+  "jg": {
+    "summary": "大于跳转（有符号）",
+    "description": "有符号比较：ZF=0 且 SF=OF 时跳转",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "大于（有符号，ZF=0 且 SF=OF）时跳转到 {label}"
+    }
+  },
+  "jge": {
+    "summary": "大于等于跳转（有符号）",
+    "description": "有符号比较：SF=OF 时跳转",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "大于等于（有符号，SF=OF）时跳转到 {label}"
+    }
+  },
+  "jl": {
+    "summary": "小于跳转（有符号）",
+    "description": "有符号比较：SF≠OF 时跳转",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "小于（有符号，SF≠OF）时跳转到 {label}"
+    }
+  },
+  "jle": {
+    "summary": "小于等于跳转（有符号）",
+    "description": "有符号比较：ZF=1 或 SF≠OF 时跳转",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "小于等于（有符号，ZF=1 或 SF≠OF）时跳转到 {label}"
+    }
+  },
+  "ja": {
+    "summary": "高于跳转（无符号）",
+    "description": "无符号比较：CF=0 且 ZF=0 时跳转",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "高于（无符号，CF=0 且 ZF=0）时跳转到 {label}"
+    }
+  },
+  "jae": {
+    "summary": "高于等于跳转（无符号）",
+    "description": "无符号比较：CF=0 时跳转",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "高于等于（无符号，CF=0）时跳转到 {label}"
+    }
+  },
+  "jb": {
+    "summary": "低于跳转（无符号）",
+    "description": "无符号比较：CF=1 时跳转",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "低于（无符号，CF=1）时跳转到 {label}"
+    }
+  },
+  "jbe": {
+    "summary": "低于等于跳转（无符号）",
+    "description": "无符号比较：CF=1 或 ZF=1 时跳转",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "低于等于（无符号，CF=1 或 ZF=1）时跳转到 {label}"
+    }
+  },
+  "js": {
+    "summary": "符号跳转",
+    "description": "SF=1（结果为负）时跳转",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "结果为负（SF=1）时跳转到 {label}"
+    }
+  },
+  "jns": {
+    "summary": "无符号标志跳转",
+    "description": "SF=0（结果非负）时跳转",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "结果非负（SF=0）时跳转到 {label}"
+    }
+  },
+  "jc": {
+    "summary": "进位跳转",
+    "description": "CF=1（有进位/借位）时跳转",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "有进位/借位（CF=1）时跳转到 {label}"
+    }
+  },
+  "jnc": {
+    "summary": "无进位跳转",
+    "description": "CF=0 时跳转",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "无进位/借位（CF=0）时跳转到 {label}"
+    }
+  },
+  "jo": {
+    "summary": "溢出跳转",
+    "description": "OF=1（有符号溢出）时跳转",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "有符号溢出（OF=1）时跳转到 {label}"
+    }
+  },
+  "jno": {
+    "summary": "无溢出跳转",
+    "description": "OF=0 时跳转",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "无溢出（OF=0）时跳转到 {label}"
+    }
+  },
+  "call": {
+    "summary": "函数调用",
+    "description": "将返回地址压栈并跳转到目标函数",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "调用函数 {label}（返回地址压栈）",
+      "reg": "间接调用 {dst} 中保存的函数地址"
+    },
+    "templates_en": {
+      "label": "call function {label}"
+    }
+  },
+  "ret": {
+    "summary": "函数返回",
+    "description": "弹出栈顶返回地址并跳转回去",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "": "从函数返回（弹出返回地址）",
+      "imm": "从函数返回并额外清理 {imm} 字节栈参数"
+    },
+    "templates_en": {
+      "": "return from function"
+    }
+  },
+  "loop": {
+    "summary": "计数循环",
+    "description": "rcx/ecx 减 1，非零则跳转到目标标签",
+    "category": "control-flow",
+    "flags_affected": "none",
+    "templates": {
+      "label": "ecx/rcx 计数器递减 1，非零则跳转到 {label} 继续循环"
+    },
+    "operands_note": "隐含使用 rcx（64 位）/ ecx（32 位）作为计数器"
+  },
+  "syscall": {
+    "summary": "系统调用",
+    "description": "发起系统调用：调用号在 rax，参数在 rdi/rsi/rdx/r10/r8/r9，返回值在 rax",
+    "category": "system",
+    "flags_affected": "none",
+    "templates": {
+      "": "发起系统调用（调用号在 rax）"
+    },
+    "operands_note": "x86-64 Linux 调用约定：rax=调用号，rdi/rsi/rdx/r10/r8/r9=参数"
+  },
+  "int": {
+    "summary": "软中断",
+    "description": "触发指定编号的软中断",
+    "category": "system",
+    "flags_affected": "IF=0,TF=0,NT=0",
+    "templates": {
+      "imm": "{if:imm==0x80}触发 0x80 软中断（Linux 32 位系统调用入口）{else}触发软中断 {imm}{endif}"
+    }
+  },
+  "nop": {
+    "summary": "空操作",
+    "description": "不做任何事情，仅占用一个指令周期（常用于对齐或占位）",
+    "category": "system",
+    "flags_affected": "none",
+    "templates": {
+      "": "空操作（占位，无任何效果）"
+    }
+  },
+  "hlt": {
+    "summary": "停机",
+    "description": "停止指令执行，直到收到中断",
+    "category": "system",
+    "flags_affected": "none",
+    "templates": {
+      "": "停机，等待中断唤醒"
+    }
+  },
+  "cpuid": {
+    "summary": "读取 CPU 信息",
+    "description": "根据 eax 入参返回 CPU 特性信息（eax/ebx/ecx/edx）",
+    "category": "system",
+    "flags_affected": "none",
+    "templates": {
+      "": "读取 CPU 信息（入参 eax，结果在 eax/ebx/ecx/edx）"
+    }
+  },
+  "cli": {
+    "summary": "关中断",
+    "description": "清除 IF 标志，屏蔽可屏蔽中断",
+    "category": "system",
+    "flags_affected": "IF=0",
+    "templates": {
+      "": "清除中断标志（关中断）"
+    }
+  },
+  "sti": {
+    "summary": "开中断",
+    "description": "设置 IF 标志，允许可屏蔽中断",
+    "category": "system",
+    "flags_affected": "IF=1",
+    "templates": {
+      "": "设置中断标志（开中断）"
+    }
+  },
+  "enter": {
+    "summary": "建立栈帧",
+    "description": "为函数建立栈帧（等价于 push rbp + mov rbp,rsp + sub rsp,N）",
+    "category": "stack",
+    "flags_affected": "none",
+    "templates": {
+      "imm,imm": "建立栈帧并分配 {imm} 字节局部变量空间",
+      "imm": "建立栈帧并分配 {imm} 字节局部变量空间"
+    }
+  },
+  "leave": {
+    "summary": "恢复栈帧",
+    "description": "释放函数栈帧（等价于 mov rsp,rbp + pop rbp）",
+    "category": "stack",
+    "flags_affected": "none",
+    "templates": {
+      "": "恢复栈帧（rsp = rbp，弹出 rbp）"
+    }
+  },
+  "movsb": {
+    "summary": "串传送（字节）",
+    "description": "从 [rsi] 复制一个字节到 [rdi]，并按 DF 调整 rsi/rdi",
+    "category": "string",
+    "flags_affected": "none",
+    "templates": {
+      "": "复制一个字节：[rsi] → [rdi]，指针按 DF 调整"
+    },
+    "operands_note": "配合 rep 前缀按 rcx 次数重复"
+  },
+  "movsw": {
+    "summary": "串传送（字）",
+    "description": "从 [rsi] 复制一个字到 [rdi]，并按 DF 调整 rsi/rdi",
+    "category": "string",
+    "flags_affected": "none",
+    "templates": {
+      "": "复制一个字（16 位）：[rsi] → [rdi]，指针按 DF 调整"
+    }
+  },
+  "movsd": {
+    "summary": "串传送（双字）",
+    "description": "从 [rsi] 复制一个双字到 [rdi]，并按 DF 调整 rsi/rdi",
+    "category": "string",
+    "flags_affected": "none",
+    "templates": {
+      "": "复制一个双字（32 位）：[rsi] → [rdi]，指针按 DF 调整"
+    }
+  },
+  "cmpsb": {
+    "summary": "串比较（字节）",
+    "description": "比较 [rsi] 与 [rdi] 的字节并设置标志位，指针按 DF 调整",
+    "category": "string",
+    "flags_affected": "CF,OF,SF,ZF,AF,PF",
+    "templates": {
+      "": "比较字节 [rsi] 与 [rdi]（设置标志位），指针按 DF 调整"
+    },
+    "operands_note": "配合 repe/repne 用于内存块比较或查找"
+  },
+  "cmpsw": {
+    "summary": "串比较（字）",
+    "description": "比较 [rsi] 与 [rdi] 的字并设置标志位，指针按 DF 调整",
+    "category": "string",
+    "flags_affected": "CF,OF,SF,ZF,AF,PF",
+    "templates": {
+      "": "比较字（16 位）[rsi] 与 [rdi]，指针按 DF 调整"
+    }
+  },
+  "cmpsd": {
+    "summary": "串比较（双字）",
+    "description": "比较 [rsi] 与 [rdi] 的双字并设置标志位，指针按 DF 调整",
+    "category": "string",
+    "flags_affected": "CF,OF,SF,ZF,AF,PF",
+    "templates": {
+      "": "比较双字（32 位）[rsi] 与 [rdi]，指针按 DF 调整"
+    }
+  },
+  "scasb": {
+    "summary": "串扫描（字节）",
+    "description": "比较 al 与 [rdi] 并设置标志位，rdi 按 DF 调整",
+    "category": "string",
+    "flags_affected": "CF,OF,SF,ZF,AF,PF",
+    "templates": {
+      "": "在 [rdi] 处比较 al（设置标志位），rdi 按 DF 调整"
+    },
+    "operands_note": "配合 repne 前缀即 strlen 的实现：查找字符串结尾 0"
+  },
+  "scasd": {
+    "summary": "串扫描（双字）",
+    "description": "比较 eax 与 [rdi] 并设置标志位，rdi 按 DF 调整",
+    "category": "string",
+    "flags_affected": "CF,OF,SF,ZF,AF,PF",
+    "templates": {
+      "": "在 [rdi] 处比较 eax（设置标志位），rdi 按 DF 调整"
+    }
+  },
+  "lodsb": {
+    "summary": "串加载（字节）",
+    "description": "从 [rsi] 加载一个字节到 al，rsi 按 DF 调整",
+    "category": "string",
+    "flags_affected": "none",
+    "templates": {
+      "": "从 [rsi] 加载一个字节到 al，rsi 按 DF 调整"
+    }
+  },
+  "lodsd": {
+    "summary": "串加载（双字）",
+    "description": "从 [rsi] 加载一个双字到 eax，rsi 按 DF 调整",
+    "category": "string",
+    "flags_affected": "none",
+    "templates": {
+      "": "从 [rsi] 加载一个双字到 eax，rsi 按 DF 调整"
+    }
+  },
+  "stosb": {
+    "summary": "串存储（字节）",
+    "description": "将 al 存储到 [rdi]，rdi 按 DF 调整",
+    "category": "string",
+    "flags_affected": "none",
+    "templates": {
+      "": "将 al 存储到 [rdi]，rdi 按 DF 调整"
+    },
+    "operands_note": "配合 rep 常用于填充内存区域"
+  },
+  "stosd": {
+    "summary": "串存储（双字）",
+    "description": "将 eax 存储到 [rdi]，rdi 按 DF 调整",
+    "category": "string",
+    "flags_affected": "none",
+    "templates": {
+      "": "将 eax 存储到 [rdi]，rdi 按 DF 调整"
+    }
+  },
+  "cld": {
+    "summary": "清除方向标志",
+    "description": "DF=0，串操作指针向高地址递增",
+    "category": "string",
+    "flags_affected": "DF=0",
+    "templates": {
+      "": "清除方向标志（DF=0，串操作指针递增）"
+    }
+  },
+  "std": {
+    "summary": "设置方向标志",
+    "description": "DF=1，串操作指针向低地址递减",
+    "category": "string",
+    "flags_affected": "DF=1",
+    "templates": {
+      "": "设置方向标志（DF=1，串操作指针递减）"
+    }
+  },
+  "section": {
+    "summary": "段声明",
+    "description": "声明代码或数据段（.text/.data/.bss/.rodata）",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "声明段"
+    }
+  },
+  "global": {
+    "summary": "导出符号",
+    "description": "将符号声明为全局（对链接器可见）",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "导出符号（链接器可见）"
+    }
+  },
+  "extern": {
+    "summary": "外部符号",
+    "description": "声明符号在其他模块中定义",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "声明外部符号"
+    }
+  },
+  "equ": {
+    "summary": "常量定义",
+    "description": "为常量表达式定义符号等价（汇编期替换）",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "定义汇编期常量"
+    }
+  },
+  "times": {
+    "summary": "重复定义",
+    "description": "将后续数据定义重复指定次数",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "重复执行后续数据定义指定次数"
+    }
+  },
+  "align": {
+    "summary": "地址对齐",
+    "description": "将当前位置对齐到指定字节边界",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "对齐到指定字节边界"
+    }
+  },
+  "bits": {
+    "summary": "汇编位数",
+    "description": "指定生成代码的位数（16/32/64）",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "指定汇编位数"
+    }
+  },
+  "default": {
+    "summary": "默认设置",
+    "description": "设置操作数大小/地址大小的默认值（如 default rel）",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "设置默认操作数/地址大小"
+    }
+  },
+  "%define": {
+    "summary": "宏定义",
+    "description": "定义单行宏（汇编期文本替换）",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "定义单行宏常量"
+    }
+  },
+  "%include": {
+    "summary": "文件包含",
+    "description": "包含另一个源文件",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "包含外部文件"
+    }
+  },
+  "%macro": {
+    "summary": "多行宏定义",
+    "description": "开始一个多行宏定义（以 %endmacro 结束）",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "定义多行宏"
+    }
+  },
+  "db": {
+    "summary": "定义字节",
+    "description": "定义一个或多个字节（8 位）数据",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "定义字节数据"
+    }
+  },
+  "dw": {
+    "summary": "定义字",
+    "description": "定义一个或多个字（16 位）数据",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "定义字（16 位）数据"
+    }
+  },
+  "dd": {
+    "summary": "定义双字",
+    "description": "定义一个或多个双字（32 位）数据",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "定义双字（32 位）数据"
+    }
+  },
+  "dq": {
+    "summary": "定义四字",
+    "description": "定义一个或多个四字（64 位）数据",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "定义四字（64 位）数据"
+    }
+  },
+  "resb": {
+    "summary": "保留字节",
+    "description": "保留指定数量的字节空间（不初始化，仅限 .bss）",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "保留字节空间（不初始化）"
+    }
+  },
+  "resw": {
+    "summary": "保留字",
+    "description": "保留指定数量的字空间（不初始化，仅限 .bss）",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "保留字（16 位）空间（不初始化）"
+    }
+  },
+  "resd": {
+    "summary": "保留双字",
+    "description": "保留指定数量的双字空间（不初始化，仅限 .bss）",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "保留双字（32 位）空间（不初始化）"
+    }
+  },
+  "resq": {
+    "summary": "保留四字",
+    "description": "保留指定数量的四字空间（不初始化，仅限 .bss）",
+    "category": "misc",
+    "flags_affected": "none",
+    "templates": {
+      "": "保留四字（64 位）空间（不初始化）"
+    }
+  }
+}

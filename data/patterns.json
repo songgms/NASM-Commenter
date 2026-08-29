@@ -1,0 +1,198 @@
+[
+  {
+    "id": "function-prologue-standard",
+    "name": "函数序言（标准）",
+    "description": "push rbp / mov rbp,rsp / sub rsp,N 标准函数序言",
+    "sequence": ["push", "mov", "sub"],
+    "operandConstraints": [
+      { "index": 0, "operand": 0, "mustBe": "rbp" },
+      { "index": 1, "operand": 0, "sameAs": [0, 0] },
+      { "index": 1, "operand": 1, "mustBe": "rsp" },
+      { "index": 2, "operand": 0, "sameAs": [1, 1] },
+      { "index": 2, "operand": 1, "isImmediate": true }
+    ],
+    "comments": [
+      "保存旧栈帧指针 rbp",
+      "设置新栈帧指针：rbp = rsp",
+      "分配 {imm} 字节局部变量空间"
+    ],
+    "comments_en": [
+      "save old frame pointer rbp",
+      "set frame pointer: rbp = rsp",
+      "allocate {imm} bytes of locals"
+    ],
+    "priority": 100,
+    "category": "function"
+  },
+  {
+    "id": "function-prologue-leaf",
+    "name": "函数序言（叶函数）",
+    "description": "无 rbp 帧指针，直接 sub rsp,N 分配局部空间",
+    "sequence": ["sub"],
+    "operandConstraints": [
+      { "index": 0, "operand": 0, "mustBe": "rsp" },
+      { "index": 0, "operand": 1, "isImmediate": true }
+    ],
+    "comments": [
+      "为叶函数分配 {imm} 字节栈空间"
+    ],
+    "comments_en": [
+      "allocate {imm} bytes of stack for leaf function"
+    ],
+    "priority": 30,
+    "category": "function"
+  },
+  {
+    "id": "function-epilogue-leave-ret",
+    "name": "函数结尾（leave/ret）",
+    "description": "leave 恢复栈帧后 ret 返回",
+    "sequence": ["leave", "ret"],
+    "comments": [
+      "恢复栈帧（rsp = rbp，弹出 rbp）",
+      "返回调用者"
+    ],
+    "comments_en": [
+      "restore frame (rsp = rbp, pop rbp)",
+      "return to caller"
+    ],
+    "priority": 90,
+    "category": "function"
+  },
+  {
+    "id": "function-epilogue-mov-pop-ret",
+    "name": "函数结尾（mov/pop/ret）",
+    "description": "mov rsp,rbp / pop rbp / ret 恢复栈帧并返回",
+    "sequence": ["mov", "pop", "ret"],
+    "operandConstraints": [
+      { "index": 0, "operand": 0, "mustBe": "rsp" },
+      { "index": 0, "operand": 1, "mustBe": "rbp" },
+      { "index": 1, "operand": 0, "mustBe": "rbp" }
+    ],
+    "comments": [
+      "恢复栈指针：rsp = rbp",
+      "恢复帧指针 rbp",
+      "返回调用者"
+    ],
+    "comments_en": [
+      "restore stack pointer: rsp = rbp",
+      "restore frame pointer rbp",
+      "return to caller"
+    ],
+    "priority": 90,
+    "category": "function"
+  },
+  {
+    "id": "strlen-scan",
+    "name": "strlen 字符串扫描",
+    "description": "repne scasb 查找字符串结尾 0 计算长度（repne 为同行的指令前缀）",
+    "sequence": ["repne scasb"],
+    "comments": [
+      "重复扫描直到 [rdi] 字节等于 al（找到结尾 0，strlen 的实现）"
+    ],
+    "comments_en": [
+      "repeat scanning until byte at [rdi] equals al (strlen idiom)"
+    ],
+    "priority": 70,
+    "category": "string"
+  },
+  {
+    "id": "write-syscall",
+    "name": "write 系统调用",
+    "description": "mov rax,1 / mov rdi,1 / mov rsi,buf / mov rdx,len / syscall 输出字符串",
+    "sequence": ["mov", "mov", "mov", "mov", "syscall"],
+    "operandConstraints": [
+      { "index": 0, "operand": 0, "mustBe": "rax" },
+      { "index": 0, "operand": 1, "mustBe": "1" },
+      { "index": 1, "operand": 0, "mustBe": "rdi" },
+      { "index": 1, "operand": 1, "mustBe": "1" },
+      { "index": 2, "operand": 0, "mustBe": "rsi" },
+      { "index": 3, "operand": 0, "mustBe": "rdx" }
+    ],
+    "comments": [
+      "系统调用号 1（write）",
+      "参数1：fd = {imm}（1 为 stdout）",
+      "参数2：输出缓冲区地址",
+      "参数3：输出字节数",
+      "执行 write 系统调用输出字符串"
+    ],
+    "comments_en": [
+      "syscall number 1 (write)",
+      "arg1: fd = {imm} (1 = stdout)",
+      "arg2: output buffer address",
+      "arg3: byte count",
+      "invoke write syscall to print"
+    ],
+    "priority": 95,
+    "category": "syscall"
+  },
+  {
+    "id": "exit-syscall-xor",
+    "name": "exit 系统调用（清零参数）",
+    "description": "mov rax,60 / xor rdi,rdi / syscall 以退出码 0 终止进程",
+    "sequence": ["mov", "xor", "syscall"],
+    "operandConstraints": [
+      { "index": 0, "operand": 0, "mustBe": "rax" },
+      { "index": 0, "operand": 1, "mustBe": "60" },
+      { "index": 1, "operand": 0, "mustBe": "rdi" },
+      { "index": 1, "operand": 1, "sameAs": [1, 0] }
+    ],
+    "comments": [
+      "系统调用号 60（exit）",
+      "参数1：退出码 0（rdi 自异或清零）",
+      "执行 exit 系统调用终止进程"
+    ],
+    "comments_en": [
+      "syscall number 60 (exit)",
+      "arg1: exit code 0 (rdi zeroed)",
+      "invoke exit syscall to terminate"
+    ],
+    "priority": 95,
+    "category": "syscall"
+  },
+  {
+    "id": "exit-syscall-mov",
+    "name": "exit 系统调用（mov 参数）",
+    "description": "mov rax,60 / mov rdi,code / syscall 终止进程",
+    "sequence": ["mov", "mov", "syscall"],
+    "operandConstraints": [
+      { "index": 0, "operand": 0, "mustBe": "rax" },
+      { "index": 0, "operand": 1, "mustBe": "60" },
+      { "index": 1, "operand": 0, "mustBe": "rdi" },
+      { "index": 1, "operand": 1, "isImmediate": true }
+    ],
+    "comments": [
+      "系统调用号 60（exit）",
+      "参数1：退出码 {imm}",
+      "执行 exit 系统调用终止进程"
+    ],
+    "comments_en": [
+      "syscall number 60 (exit)",
+      "arg1: exit code {imm}",
+      "invoke exit syscall to terminate"
+    ],
+    "priority": 94,
+    "category": "syscall"
+  },
+  {
+    "id": "counting-loop",
+    "name": "计数循环",
+    "description": "mov 计数器 / dec 递减 / jnz 回跳构成递减计数循环",
+    "sequence": ["mov", "dec", "jnz"],
+    "operandConstraints": [
+      { "index": 1, "operand": 0, "sameAs": [0, 0] },
+      { "index": 2, "operand": 0, "isRegister": true }
+    ],
+    "comments": [
+      "初始化计数器 {dst}",
+      "计数器 {dst} 递减 1",
+      "计数器非零（ZF=0）时跳回循环开始"
+    ],
+    "comments_en": [
+      "initialize counter {dst}",
+      "decrement counter {dst}",
+      "jump back to loop start while counter nonzero (ZF=0)"
+    ],
+    "priority": 80,
+    "category": "loop"
+  }
+]

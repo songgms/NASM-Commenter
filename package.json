@@ -1,0 +1,207 @@
+{
+  "name": "nasm-commenter",
+  "displayName": "NASM Commenter",
+  "description": "为 NASM 汇编代码自动生成高质量注释：离线规则引擎 + 可选 LLM 增强",
+  "version": "0.1.0",
+  "publisher": "nasm-commenter",
+  "author": "nasm-commenter contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasm-commenter/nasm-commenter"
+  },
+  "engines": {
+    "vscode": "^1.80.0",
+    "node": ">=18"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "nasm",
+    "assembly",
+    "comment",
+    "lsp"
+  ],
+  "activationEvents": [
+    "onLanguage:nasm"
+  ],
+  "main": "./dist/client/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "nasm",
+        "aliases": [
+          "NASM",
+          "nasm"
+        ],
+        "extensions": [
+          ".asm",
+          ".nasm"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "nasm-commenter.annotateFile",
+        "title": "注释整个文件",
+        "category": "NASM Commenter"
+      },
+      {
+        "command": "nasm-commenter.annotateSelection",
+        "title": "注释选中区域",
+        "category": "NASM Commenter"
+      },
+      {
+        "command": "nasm-commenter.annotateLine",
+        "title": "注释当前行",
+        "category": "NASM Commenter"
+      },
+      {
+        "command": "nasm-commenter.annotateFunction",
+        "title": "注释当前函数",
+        "category": "NASM Commenter"
+      },
+      {
+        "command": "nasm-commenter.removeComments",
+        "title": "移除自动注释",
+        "category": "NASM Commenter"
+      },
+      {
+        "command": "nasm-commenter.toggleInline",
+        "title": "切换行内/上方注释",
+        "category": "NASM Commenter"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "nasm-commenter.annotateLine",
+        "key": "ctrl+;",
+        "when": "editorTextFocus && editorLangId == nasm"
+      },
+      {
+        "command": "nasm-commenter.annotateSelection",
+        "key": "ctrl+shift+;",
+        "when": "editorTextFocus && editorLangId == nasm"
+      }
+    ],
+    "configuration": {
+      "title": "NASM Commenter",
+      "properties": {
+        "nasm-commenter.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "启用 NASM Commenter"
+        },
+        "nasm-commenter.language": {
+          "type": "string",
+          "enum": [
+            "zh",
+            "en"
+          ],
+          "default": "zh",
+          "description": "注释语言"
+        },
+        "nasm-commenter.style": {
+          "type": "string",
+          "enum": [
+            "inline",
+            "above"
+          ],
+          "default": "inline",
+          "description": "注释样式：行内或行上方"
+        },
+        "nasm-commenter.minColumn": {
+          "type": "number",
+          "default": 32,
+          "minimum": 8,
+          "description": "行内注释的最小对齐列"
+        },
+        "nasm-commenter.verbose": {
+          "type": "boolean",
+          "default": false,
+          "description": "详细模式：附加标志位与副作用说明"
+        },
+        "nasm-commenter.autoAnnotate": {
+          "type": "boolean",
+          "default": false,
+          "description": "保存时自动注释"
+        },
+        "nasm-commenter.protectExistingComments": {
+          "type": "boolean",
+          "default": true,
+          "description": "保护用户已有注释（开启时不覆盖手写注释）"
+        },
+        "nasm-commenter.llm.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "启用 LLM 增强（规则引擎无法注释的行调用 LLM）"
+        },
+        "nasm-commenter.llm.provider": {
+          "type": "string",
+          "enum": [
+            "openai",
+            "ollama"
+          ],
+          "default": "openai",
+          "description": "LLM 提供方"
+        },
+        "nasm-commenter.llm.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API Key（OpenAI 兼容端点）"
+        },
+        "nasm-commenter.llm.model": {
+          "type": "string",
+          "default": "gpt-4o-mini",
+          "description": "模型名"
+        },
+        "nasm-commenter.llm.baseUrl": {
+          "type": "string",
+          "default": "https://api.openai.com/v1",
+          "description": "OpenAI 兼容端点地址"
+        },
+        "nasm-commenter.llm.timeout": {
+          "type": "number",
+          "default": 30000,
+          "description": "LLM 请求超时（毫秒）"
+        },
+        "nasm-commenter.llm.cache": {
+          "type": "boolean",
+          "default": true,
+          "description": "缓存 LLM 结果，避免重复请求"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "tsc -b",
+    "watch": "tsc -b --watch",
+    "lint": "eslint client/src server/src --ext .ts",
+    "validate:schema": "node scripts/validate-schema.js",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:snapshot": "vitest run tests/snapshot",
+    "test:snapshot:update": "node scripts/update-snapshots.js",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "@vscode/vsce": "^3.2.0",
+    "eslint": "^8.57.1",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.9"
+  }
+}

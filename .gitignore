@@ -1,0 +1,25 @@
+# 依赖与构建产物
+node_modules/
+dist/
+coverage/
+
+# TypeScript 增量构建信息
+*.tsbuildinfo
+
+# 打包产物
+*.vsix
+
+# VSCode 扩展测试宿主
+.vscode-test/
+
+# 日志与缓存
+*.log
+.eslintcache
+
+# AI 协作会话数据（工作区本地）
+.zcode/
+
+# 操作系统垃圾文件
+.DS_Store
+Thumbs.db
+desktop.ini

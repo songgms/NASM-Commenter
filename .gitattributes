@@ -1,0 +1,7 @@
+# 统一换行符为 LF（Windows 下避免 CRLF 混入仓库与 GitHub diff 噪音）
+* text=auto eol=lf
+
+# 二进制文件不做换行符处理
+*.vsix binary
+*.png binary
+*.gif binary
