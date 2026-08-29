@@ -9,6 +9,10 @@ import { REGISTERS, INSTRUCTION_PREFIXES } from '../lexer/token-definitions'
 import { findCommentStart } from '../utils/indent'
 import { JUMP_MNEMONICS } from './shared'
 
+/** 段名与位数补全字典。 */
+const SECTION_NAMES = ['.text', '.data', '.bss', '.rodata', '.rdata']
+const BITS_VALUES = ['16', '32', '64']
+
 /** 提供补全时已输入的前缀（命令位置的单词）。 */
 function wordPrefixAt(lineText: string, character: number): { prefix: string; tokensBefore: { type: string; value: string }[] } {
   const upToCursor = lineText.slice(0, character)
@@ -74,6 +78,7 @@ function labelItems(labelNames: string[], prefix: string): CompletionItem[] {
  * 生成光标处补全列表：
  * - 注释内 → 无补全
  * - 命令位置（行首/标签后）→ 指令名
+ * - `section`/`bits` 操作数位置 → 段名 / 位数
  * - 跳转指令操作数位置 → 标签优先，其次寄存器
  * - 其他操作数位置 → 寄存器 + 标签
  */
@@ -99,11 +104,27 @@ export function provideCompletions(
     return mnemonicItems(stores, prefix)
   }
 
-  // 跳转指令操作数位置：标签优先（取最后一个标识符作为助记符，兼容标签同行）
-  const prevMnemonic = [...meaningful]
+  // 伪指令参数位置：段名 / 位数
+  const lastIdentifier = [...meaningful]
     .reverse()
     .find((t) => t.type === 'identifier' && !INSTRUCTION_PREFIXES.has(t.value.toLowerCase()))
-    ?.value.toLowerCase()
+  const prevMnemonic = lastIdentifier?.value.toLowerCase()
+  if (prevMnemonic === 'section' || prevMnemonic === 'segment') {
+    return SECTION_NAMES.filter((s) => s.startsWith(prefix)).map((s) => ({
+      label: s,
+      kind: CompletionItemKind.Module,
+      detail: '段名'
+    }))
+  }
+  if (prevMnemonic === 'bits') {
+    return BITS_VALUES.filter((b) => b.startsWith(prefix)).map((b) => ({
+      label: b,
+      kind: CompletionItemKind.Value,
+      detail: '汇编位数'
+    }))
+  }
+
+  // 跳转指令操作数位置：标签优先（取最后一个标识符作为助记符，兼容标签同行）
   if (last.type === 'identifier' && prevMnemonic !== undefined && JUMP_MNEMONICS.has(prevMnemonic)) {
     return [...labelItems(labelNames, prefix), ...registerItems(prefix)]
   }

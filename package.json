@@ -2,7 +2,7 @@
   "name": "nasm-commenter",
   "displayName": "NASM Commenter",
   "description": "为 NASM 汇编代码自动生成高质量注释：离线规则引擎 + 可选 LLM 增强",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publisher": "nasm-commenter",
   "author": "nasm-commenter contributors",
   "license": "MIT",

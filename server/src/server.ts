@@ -52,6 +52,7 @@ import { provideCompletions } from './lsp/completion'
 import { validateDocument } from './lsp/diagnostics'
 import { provideVirtualComments } from './lsp/inlay-hints'
 import type { DiagnosticData } from './lsp/diagnostics'
+import type { VirtualComment } from './lsp/inlay-hints'
 import { findCommentStart } from './utils/indent'
 
 export class NASMLanguageServer {
@@ -62,6 +63,8 @@ export class NASMLanguageServer {
   private llm: LLMAdapter | undefined
   /** 每文档 ABI 检测缓存（按版本失效） */
   private abiCache = new Map<string, { version: number; abi: ReturnType<typeof detectABI> }>()
+  /** 每文档虚拟注释缓存（按版本失效） */
+  private virtualCache = new Map<string, { version: number; hints: VirtualComment[] }>()
   /** 诊断防抖定时器（按 uri） */
   private readonly diagTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -94,15 +97,18 @@ export class NASMLanguageServer {
     this.documents.listen(this.connection)
     this.documents.onDidOpen((event) => {
       this.abiCache.delete(event.document.uri)
+      this.virtualCache.delete(event.document.uri)
       this.pushCoverage(event.document)
       this.validateAndPush(event.document)
     })
     this.documents.onDidChangeContent((event) => {
       this.abiCache.delete(event.document.uri)
+      this.virtualCache.delete(event.document.uri)
       this.validateAndPushDebounced(event.document)
     })
     this.documents.onDidClose((event) => {
       this.abiCache.delete(event.document.uri)
+      this.virtualCache.delete(event.document.uri)
       const timer = this.diagTimers.get(event.document.uri)
       if (timer !== undefined) {
         clearTimeout(timer)
@@ -111,12 +117,22 @@ export class NASMLanguageServer {
       void this.connection.sendDiagnostics({ uri: event.document.uri, diagnostics: [] })
     })
     this.connection.onDidChangeConfiguration((params) => {
+      const virtualChanged = this.config.virtual !== this.extractConfigSettings(params.settings).virtual
       this.config = resolveConfig(this.extractConfigSettings(params.settings))
       this.refreshLLM()
+      this.virtualCache.clear()
+      if (virtualChanged) {
+        this.requestInlayRefresh()
+      }
     })
     this.connection.onNotification('nasm-commenter/configDidChange', (params: ConfigDidChangeParams) => {
+      const virtualChanged = this.config.virtual !== params.config.virtual
       this.config = resolveConfig(params.config)
       this.refreshLLM()
+      this.virtualCache.clear()
+      if (virtualChanged) {
+        this.requestInlayRefresh()
+      }
     })
     this.connection.onHover(this.onHover.bind(this))
     this.connection.onCodeAction(this.onCodeAction.bind(this))
@@ -294,22 +310,35 @@ export class NASMLanguageServer {
     }
   }
 
-  /** 虚拟注释（Inlay Hint 幽灵文字预览，不修改文档）。 */
+  /** 请求客户端刷新虚拟注释（配置开关变化后即时生效）。 */
+  private requestInlayRefresh(): void {
+    try {
+      void this.connection.languages.inlayHint.refresh()
+    } catch (e) {
+      logger.debug(`inlayHint refresh 不可用: ${String(e)}`)
+    }
+  }
+
+  /** 虚拟注释（Inlay Hint 幽灵文字预览，不修改文档；结果按文档版本缓存）。 */
   private onInlayHints(params: {
     textDocument: { uri: string }
     range: { start: { line: number }; end: { line: number } }
   }): InlayHint[] {
-    if (!resolveConfig({ ...this.config }).virtual || this.stores === null) {
+    if (!this.config.virtual || this.stores === null) {
       return []
     }
     const doc = this.documents.get(params.textDocument.uri)
     if (doc === undefined) {
       return []
     }
-    const config = resolveConfig({ ...this.config, protectExistingComments: false })
-    const ann = annotateSource(doc.getText(), this.requireStores(), config)
-    const virtual = provideVirtualComments(ann.lines, ann.comments, this.requireStores())
-    return virtual
+    let cached = this.virtualCache.get(doc.uri)
+    if (cached === undefined || cached.version !== doc.version) {
+      const config = resolveConfig({ ...this.config, protectExistingComments: false })
+      const ann = annotateSource(doc.getText(), this.stores, config)
+      cached = { version: doc.version, hints: provideVirtualComments(ann.lines, ann.comments, this.stores) }
+      this.virtualCache.set(doc.uri, cached)
+    }
+    return cached.hints
       .filter((v) => v.line >= params.range.start.line && v.line <= params.range.end.line)
       .map((v): InlayHint => ({
         position: { line: v.line, character: v.character },

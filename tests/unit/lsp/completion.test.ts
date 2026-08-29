@@ -69,6 +69,19 @@ describe('provideCompletions', () => {
     expect(labels[0]).toBe('dest')
   })
 
+  it('section 参数 → 段名补全', () => {
+    const items = provideCompletions('section .', 9, stores, LABELS)
+    const labels = items.map((i) => i.label)
+    expect(labels).toContain('.text')
+    expect(labels).toContain('.bss')
+    expect(labels).not.toContain('mov')
+  })
+
+  it('bits 参数 → 位数补全', () => {
+    const items = provideCompletions('bits ', 5, stores, LABELS)
+    expect(items.map((i) => i.label)).toEqual(['16', '32', '64'])
+  })
+
   it('寄存器补全带位宽说明', () => {
     const items = provideCompletions('mov ', 4, stores, LABELS)
     const rax = items.find((i) => i.label === 'rax')!
