@@ -6,7 +6,6 @@
 import type { Command } from 'vscode-languageserver/node'
 import { parseLine } from '../lexer'
 import { findCommentStart } from '../utils/indent'
-import { AUTO_MARKER } from '../engine/comment-formatter'
 
 /** 单个 CodeAction（纯数据）。 */
 export interface CodeActionData {
@@ -19,12 +18,15 @@ export function provideCodeActions(lineText: string, multiLine: boolean): CodeAc
   const actions: CodeActionData[] = []
   const parsed = parseLine(lineText, 0)
   const hasComment = findCommentStart(lineText) >= 0
-  const hasAuto = lineText.includes(AUTO_MARKER)
 
-  if (hasAuto) {
+  if (hasComment) {
     actions.push({
-      title: '移除 NASM 自动注释',
-      command: { title: '移除 NASM 自动注释', command: 'nasm-commenter.removeComments' }
+      title: '移除自动注释',
+      command: { title: '移除自动注释', command: 'nasm-commenter.removeComments' }
+    })
+    actions.push({
+      title: '去掉所有注释（含手写）',
+      command: { title: '去掉所有注释（含手写）', command: 'nasm-commenter.stripAllComments' }
     })
     return actions
   }

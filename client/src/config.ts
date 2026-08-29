@@ -10,6 +10,7 @@ export function getConfig(): CommentConfig {
   const llmProvider = cfg.get<string>('llm.provider', 'openai') as LLMProvider
   return {
     enable: cfg.get<boolean>('enable', true),
+    virtual: cfg.get<boolean>('virtual', true),
     language: cfg.get<'zh' | 'en'>('language', 'zh'),
     style: cfg.get<'inline' | 'above'>('style', 'inline'),
     minColumn: cfg.get<number>('minColumn', 32),

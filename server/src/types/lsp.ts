@@ -11,6 +11,7 @@ export type NasmCommenterMethod =
   | 'nasm-commenter/annotateSelection'
   | 'nasm-commenter/annotateFunction'
   | 'nasm-commenter/removeComments'
+  | 'nasm-commenter/stripAllComments'
   | 'nasm-commenter/configDidChange'
   | 'nasm-commenter/stats'
 
@@ -64,6 +65,17 @@ export interface RemoveCommentsRequest {
 
 /** removeComments 响应。 */
 export interface RemoveCommentsResponse {
+  edits: AnnotatedEdit[]
+  count: number
+}
+
+/** stripAllComments 请求：去掉文件内全部注释（含手写注释）。 */
+export interface StripAllCommentsRequest {
+  textDocument: DocumentRef
+}
+
+/** stripAllComments 响应。 */
+export interface StripAllCommentsResponse {
   edits: AnnotatedEdit[]
   count: number
 }

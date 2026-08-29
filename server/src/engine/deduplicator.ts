@@ -39,7 +39,7 @@ export function shouldSkip(line: string, generatedComment: string, marker = ''):
 
 /**
  * 将 AnnotatedEdit 应用到多行文本（与客户端 WorkspaceEdit.replace 行为一致）。
- * 按行后序应用避免索引漂移；server 端用于模拟注释后的文本状态。
+ * 支持跨行范围（endLine > startLine，如整行删除）；按行后序应用避免索引漂移。
  */
 export function applyEditsToText(text: string, edits: AnnotatedEdit[]): string {
   const lines = text.split(/\r?\n/)
@@ -47,12 +47,20 @@ export function applyEditsToText(text: string, edits: AnnotatedEdit[]): string {
     (a, b) => b.startLine - a.startLine || b.startCharacter - a.startCharacter
   )
   for (const e of sorted) {
-    const line = lines[e.startLine] ?? ''
-    if (e.startLine === e.endLine && e.startCharacter === e.endCharacter) {
-      lines[e.startLine] = line.slice(0, e.startCharacter) + e.newText + line.slice(e.startCharacter)
-    } else {
-      lines[e.startLine] = line.slice(0, e.startCharacter) + e.newText + line.slice(e.endCharacter)
+    const startLineText = lines[e.startLine] ?? ''
+    if (e.startLine === e.endLine) {
+      if (e.startCharacter === e.endCharacter) {
+        lines[e.startLine] = startLineText.slice(0, e.startCharacter) + e.newText + startLineText.slice(e.startCharacter)
+      } else {
+        lines[e.startLine] = startLineText.slice(0, e.startCharacter) + e.newText + startLineText.slice(e.endCharacter)
+      }
+      continue
     }
+    // 跨行：合并首尾行为一行
+    const endLineText = lines[e.endLine] ?? ''
+    const merged =
+      startLineText.slice(0, e.startCharacter) + e.newText + endLineText.slice(e.endCharacter)
+    lines.splice(e.startLine, e.endLine - e.startLine + 1, merged)
   }
   return lines.join('\n')
 }

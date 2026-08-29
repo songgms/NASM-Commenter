@@ -36,6 +36,8 @@ export interface CommentConfig {
   autoAnnotate: boolean
   /** 保护用户已有注释（默认 true） */
   protectExistingComments: boolean
+  /** 虚拟注释预览（Inlay Hint 幽灵文字，不修改文档；默认 true） */
+  virtual: boolean
   /**
    * 自动注释标记前缀（默认空 = 不带标记）。
    * 设置如 `[nasm-commenter] ` 可恢复精确的标记式移除。

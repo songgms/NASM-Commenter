@@ -10,6 +10,7 @@ export {
   DEFAULT_MARKER
 } from './comment-formatter'
 export { shouldSkip, existingComment, buildRemoveEdits, applyEditsToText } from './deduplicator'
+export { stripAllCommentsEdits } from './strip-comments'
 export {
   CommentEngine,
   buildEdits,

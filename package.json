@@ -2,7 +2,7 @@
   "name": "nasm-commenter",
   "displayName": "NASM Commenter",
   "description": "为 NASM 汇编代码自动生成高质量注释：离线规则引擎 + 可选 LLM 增强",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "nasm-commenter",
   "author": "nasm-commenter contributors",
   "license": "MIT",
@@ -74,6 +74,16 @@
         "command": "nasm-commenter.toggleInline",
         "title": "切换行内/上方注释",
         "category": "NASM Commenter"
+      },
+      {
+        "command": "nasm-commenter.stripAllComments",
+        "title": "去掉所有注释",
+        "category": "NASM Commenter"
+      },
+      {
+        "command": "nasm-commenter.toggleVirtual",
+        "title": "切换虚拟注释预览",
+        "category": "NASM Commenter"
       }
     ],
     "keybindings": [
@@ -95,6 +105,11 @@
           "type": "boolean",
           "default": true,
           "description": "启用 NASM Commenter"
+        },
+        "nasm-commenter.virtual": {
+          "type": "boolean",
+          "default": true,
+          "description": "虚拟注释预览：以幽灵文字在行尾展示注释，不修改文档（注释命令仍可直接写入）"
         },
         "nasm-commenter.language": {
           "type": "string",

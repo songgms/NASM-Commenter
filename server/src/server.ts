@@ -16,6 +16,8 @@ import {
   CodeActionKind,
   Command,
   CompletionItem,
+  InlayHint,
+  InlayHintKind,
   ResponseError
 } from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
@@ -28,6 +30,8 @@ import type {
   AnnotateFunctionResponse,
   RemoveCommentsRequest,
   RemoveCommentsResponse,
+  StripAllCommentsRequest,
+  StripAllCommentsResponse,
   ConfigDidChangeParams,
   StatsNotificationParams
 } from './types'
@@ -39,12 +43,14 @@ import { parseDocument } from './lexer'
 import { detectABI } from './utils/abi-detector'
 import { annotateSource, annotateSourceEnhanced, buildEdits, buildFunctionComment } from './engine/comment-engine'
 import { applyEditsToText, buildRemoveEdits } from './engine/deduplicator'
+import { stripAllCommentsEdits } from './engine/strip-comments'
 import { createLLMAdapter } from './llm'
 import type { LLMAdapter } from './llm'
 import { hoverAt } from './lsp/hover'
 import { provideCodeActions } from './lsp/code-action'
 import { provideCompletions } from './lsp/completion'
 import { validateDocument } from './lsp/diagnostics'
+import { provideVirtualComments } from './lsp/inlay-hints'
 import type { DiagnosticData } from './lsp/diagnostics'
 import { findCommentStart } from './utils/indent'
 
@@ -115,10 +121,12 @@ export class NASMLanguageServer {
     this.connection.onHover(this.onHover.bind(this))
     this.connection.onCodeAction(this.onCodeAction.bind(this))
     this.connection.onCompletion(this.onCompletion.bind(this))
+    this.connection.languages.inlayHint.on(this.onInlayHints.bind(this))
     this.connection.onRequest('nasm-commenter/annotateFile', this.onAnnotateFile.bind(this))
     this.connection.onRequest('nasm-commenter/annotateSelection', this.onAnnotateSelection.bind(this))
     this.connection.onRequest('nasm-commenter/annotateFunction', this.onAnnotateFunction.bind(this))
     this.connection.onRequest('nasm-commenter/removeComments', this.onRemoveComments.bind(this))
+    this.connection.onRequest('nasm-commenter/stripAllComments', this.onStripAllComments.bind(this))
     this.connection.listen()
   }
 
@@ -139,7 +147,8 @@ export class NASMLanguageServer {
         textDocumentSync: TextDocumentSyncKind.Incremental,
         hoverProvider: true,
         codeActionProvider: true,
-        completionProvider: { resolveProvider: false }
+        completionProvider: { resolveProvider: false },
+        inlayHintProvider: true
       }
     }
   }
@@ -283,6 +292,39 @@ export class NASMLanguageServer {
       edits: [fc.edit],
       confidence: fc.confidence
     }
+  }
+
+  /** 虚拟注释（Inlay Hint 幽灵文字预览，不修改文档）。 */
+  private onInlayHints(params: {
+    textDocument: { uri: string }
+    range: { start: { line: number }; end: { line: number } }
+  }): InlayHint[] {
+    if (!resolveConfig({ ...this.config }).virtual || this.stores === null) {
+      return []
+    }
+    const doc = this.documents.get(params.textDocument.uri)
+    if (doc === undefined) {
+      return []
+    }
+    const config = resolveConfig({ ...this.config, protectExistingComments: false })
+    const ann = annotateSource(doc.getText(), this.requireStores(), config)
+    const virtual = provideVirtualComments(ann.lines, ann.comments, this.requireStores())
+    return virtual
+      .filter((v) => v.line >= params.range.start.line && v.line <= params.range.end.line)
+      .map((v): InlayHint => ({
+        position: { line: v.line, character: v.character },
+        label: v.label,
+        kind: InlayHintKind.Parameter,
+        paddingLeft: true,
+        tooltip: v.tooltip !== undefined ? { kind: MarkupKind.Markdown, value: v.tooltip } : undefined
+      }))
+  }
+
+  /** 去掉所有注释（含手写注释）：整行注释删行，行尾注释剥离。 */
+  private onStripAllComments(params: StripAllCommentsRequest): StripAllCommentsResponse {
+    const doc = this.requireDoc(params.textDocument.uri)
+    const edits = stripAllCommentsEdits(doc.getText())
+    return { edits, count: edits.length }
   }
 
   private onRemoveComments(params: RemoveCommentsRequest): RemoveCommentsResponse {

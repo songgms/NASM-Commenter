@@ -75,6 +75,8 @@ export type {
   AnnotateFunctionResponse,
   RemoveCommentsRequest,
   RemoveCommentsResponse,
+  StripAllCommentsRequest,
+  StripAllCommentsResponse,
   ConfigDidChangeParams,
   StatsNotificationParams
 } from './lsp'
