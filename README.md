@@ -65,6 +65,26 @@ VSCode (client/src)  --JSON-RPC over IPC-->  Language Server (server/src)
 - **Server 无状态 handler + 上下文追踪**：模板 → 模式 → 上下文增强 → LLM 兜底 的分层生成
 - 详见 [docs/01-architecture-and-lsp.md](./docs/01-architecture-and-lsp.md)
 
+## 目录结构
+
+```
+├── client/src/      # VSCode 扩展宿主：命令、状态栏、编辑应用
+├── server/src/      # 语言服务器（核心逻辑全在此）
+│   ├── lexer/       # 词法分析：tokenizer、操作数、行解析、预处理
+│   ├── knowledge/   # 知识库加载与四个 Store
+│   ├── engine/      # 注释引擎：模板渲染、格式化、去重、编排
+│   ├── handlers/    # 指令分类处理（数据传送/算术/逻辑/控制流/系统/串/伪指令…）
+│   ├── context/     # 上下文：寄存器传播、函数/循环/栈帧、模式匹配
+│   ├── llm/         # 可选 LLM 增强（OpenAI 兼容 / Ollama）
+│   ├── lsp/         # Hover、补全、CodeAction、诊断
+│   └── types/       # 前后端共享类型（零运行时依赖）
+├── data/            # 知识库 JSON（社区贡献入口）
+├── schemas/         # JSON Schema
+├── tests/           # unit / integration(fixtures) / snapshot 三层
+├── docs/            # 设计文档（8 篇）
+└── scripts/         # 校验、图标生成、快照更新
+```
+
 ## 安装
 
 - **从 VSIX**：`code --install-extension nasm-commenter-<版本>.vsix`，或在扩展视图 `···` → 「从 VSIX 安装...」；构建产物见仓库 Release / CI Artifacts

@@ -34,6 +34,10 @@ export function provideCodeActions(lineText: string, multiLine: boolean): CodeAc
       title: '添加 NASM 注释',
       command: { title: '添加 NASM 注释', command: 'nasm-commenter.annotateLine' }
     })
+    actions.push({
+      title: '为当前函数生成块注释',
+      command: { title: '为当前函数生成块注释', command: 'nasm-commenter.annotateFunction' }
+    })
   }
   if (multiLine) {
     actions.push({

@@ -95,4 +95,26 @@ describe('integration: engine end-to-end', () => {
     const ann = annotateSource(source, stores, config, { startLine: 10, endLine: 12 })
     expect(ann.comments.size).toBeLessThanOrEqual(3)
   })
+
+  it('above 样式：整行插入且不留行内注释', () => {
+    const source = loadFixture('hello-world')
+    const cfg = testConfig({ style: 'above' })
+    const ann = annotateSource(source, stores, cfg)
+    const edits = buildEdits(ann.lines, ann.comments, cfg)
+    expect(edits.length).toBeGreaterThan(0)
+    for (const e of edits) {
+      expect(e.startCharacter).toBe(0)
+      expect(e.endCharacter).toBe(0)
+      expect(e.newText).toMatch(/^[ \t]*; \[nasm-commenter\]/)
+      expect(e.newText.endsWith('\n')).toBe(true)
+    }
+    const applied = applyEditsToText(source, edits)
+    // 新增行数 = 编辑数；所有含标记的行都是上方注释行
+    expect(applied.split('\n').length).toBe(source.split('\n').length + edits.length)
+    for (const line of applied.split('\n')) {
+      if (line.includes('[nasm-commenter]')) {
+        expect(line).toMatch(/^[ \t]*; \[nasm-commenter\]/)
+      }
+    }
+  })
 })

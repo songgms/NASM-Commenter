@@ -206,6 +206,12 @@ export function tokenizeLine(line: string): Token[] {
     }
     const ch = line[i]
 
+    // UTF-8 BOM：按不可见字符跳过（保持后续 token 位置正确）
+    if (ch === '\uFEFF') {
+      i++
+      continue
+    }
+
     // 注释：剩余全部归入一个 comment token
     if (ch === ';') {
       tokens.push({ type: 'comment', value: line.slice(i + 1).trim(), start: i, end: line.length })

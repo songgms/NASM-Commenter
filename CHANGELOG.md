@@ -8,12 +8,19 @@
 ### Added
 
 - 扩展图标：脚本生成的汇编分号标识（`assets/icon.png`，零依赖 PNG 生成器）
+- CodeAction 新增「为当前函数生成块注释」；操作数补全包含 `%define` 宏常量名
+- README 新增目录结构与安装章节
+
+### Fixed
+
+- 带 UTF-8 BOM 的文件首行可正常解析与注释（token 位置保持正确）
 
 ### Changed
 
+- LLM 适配器记录请求延迟与失败日志（stderr → 输出面板）
 - 诊断推送增加 300ms 防抖，编辑大文件更流畅
 - CI 在 Node 20 上打包并上传 VSIX 构建产物
-- README 新增安装章节与 CI 徽章
+- 补全/诊断共享跳转助记符常量（lsp/shared）
 
 ## [0.2.0] - 2026-08-29
 

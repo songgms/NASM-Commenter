@@ -83,6 +83,13 @@ describe('tokenizer', () => {
     expect(types('mov @# x')).toContain('unknown')
   })
 
+  it('UTF-8 BOM 跳过且 token 位置正确', () => {
+    const line = '\uFEFFmov rax, 1'
+    const tokens = tokenizeLine(line)
+    expect(tokens[0]).toMatchObject({ type: 'identifier', value: 'mov', start: 1, end: 4 })
+    expect(tokens[1]).toMatchObject({ type: 'register', value: 'rax' })
+  })
+
   it('token 携带位置信息', () => {
     const tokens = tokenizeLine('mov rax, 1')
     expect(tokens[0].start).toBe(0)

@@ -222,9 +222,23 @@ export class NASMLanguageServer {
     }
     const lines = doc.getText().split(/\r?\n/)
     const lineText = lines[params.position.line] ?? ''
-    const labelNames = parseDocument(doc.getText())
-      .map((l) => l.label)
-      .filter((l): l is string => l !== undefined)
+    const parsed = parseDocument(doc.getText())
+    const labelNames: string[] = []
+    const seen = new Set<string>()
+    for (const l of parsed) {
+      if (l.label !== undefined && !seen.has(l.label)) {
+        seen.add(l.label)
+        labelNames.push(l.label)
+      }
+      // %define 宏常量也是合法操作数
+      if (l.directive === '%define' && l.directiveArgs?.[0]) {
+        const name = l.directiveArgs[0].split(/\s+/)[0]
+        if (name.length > 0 && !seen.has(name)) {
+          seen.add(name)
+          labelNames.push(name)
+        }
+      }
+    }
     return provideCompletions(lineText, params.position.character, stores, labelNames)
   }
 
