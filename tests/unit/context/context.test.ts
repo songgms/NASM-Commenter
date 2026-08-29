@@ -95,6 +95,25 @@ describe('document-context', () => {
     expect(sc?.args?.[2]?.value).toBe(12)
   })
 
+  it('栈帧识别与 epilogue 后释放', () => {
+    const src = [
+      'f:',
+      '    push rbp',
+      '    mov rbp, rsp',
+      '    sub rsp, 8',
+      '    mov dword [rbp-4], 1',
+      '    leave',
+      '    ret'
+    ].join('\n')
+    const ctx = new DocumentContext(parseDocument(src), 'linux-x64', stores.syscalls)
+    const contexts = ctx.buildLineContexts()
+    expect(contexts.get(4)?.stackFrame).toMatchObject({ localsSize: 8, baseRegister: 'rbp' })
+    expect(contexts.get(5)?.stackFrame).toBeUndefined() // leave 行即释放
+    expect(contexts.get(6)?.stackFrame).toBeUndefined()
+    expect(ctx.getStackFrameAt(4)).toBeDefined()
+    expect(ctx.getStackFrameAt(6)).toBeUndefined()
+  })
+
   it('buildLineContexts 输出全行快照', () => {
     const ctx = new DocumentContext(parseDocument(SRC), 'linux-x64', stores.syscalls)
     const contexts = ctx.buildLineContexts()

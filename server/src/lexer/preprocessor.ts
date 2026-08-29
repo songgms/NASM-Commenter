@@ -23,8 +23,9 @@ function replaceOutsideStrings(line: string, replace: (s: string) => string): st
         const c = line[i]
         result += c
         i++
-        if (ch === "'" && c === "'" && line[i] === "'") {
-          result += line[i] // 转义的单引号
+        // 连续两个相同引号 = 转义引号（'' 或 ""）
+        if (c === ch && line[i] === ch) {
+          result += line[i]
           i++
           continue
         }

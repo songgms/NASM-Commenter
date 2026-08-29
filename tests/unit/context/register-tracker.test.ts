@@ -55,6 +55,11 @@ describe('register-tracker', () => {
     expect(snap.get(2)?.rax).toBeUndefined()
   })
 
+  it('写宽寄存器后子寄存器失效', () => {
+    const snap = snapshots('mov eax, 5\nmov rax, 100\nmov ebx, eax')
+    expect(snap.get(2)?.eax).toBeUndefined()
+  })
+
   it('applyLine 不可变：不修改入参', () => {
     const lines = parseDocument('mov rax, 1')
     const state = {}

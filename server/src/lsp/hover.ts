@@ -1,13 +1,14 @@
 /**
- * Hover 处理：悬停在指令名 → 指令语义；寄存器 → 寄存器约定；系统调用行 → 调用信息。
+ * Hover 处理：悬停在指令名 → 指令语义；寄存器 → 寄存器约定；
+ * 系统调用号（mov rax/eax, imm 的立即数）→ 系统调用名与参数。
  * 输出 Markdown 字符串（由 server 包装为 Hover 对象）。
  */
-import type { ABI } from '../types'
+import type { ABI, SyscallInfo } from '../types'
 import type { KnowledgeStores } from '../knowledge'
-import { parseLine, tokenizeLine } from '../lexer'
+import { parseLine, tokenizeLine, parseImmediate } from '../lexer'
 
-/** 计算 token 覆盖光标列的 token。 */
-function tokenAt(tokens: { start: number; end: number; type: string; value: string }[], character: number): { type: string; value: string } | null {
+/** 光标所在 token。 */
+function tokenAt(tokens: { start: number; end: number; type: string; value: string }[], character: number): { type: string; value: string; start: number; end: number } | null {
   for (const tok of tokens) {
     if (character >= tok.start && character < tok.end) {
       return tok
@@ -45,32 +46,71 @@ export function registerHover(register: string, abi: ABI, stores: KnowledgeStore
   return `**${register.toLowerCase()}** — ${role}`
 }
 
+/** 系统调用 hover 内容。 */
+export function syscallHover(number: number, info: SyscallInfo): string {
+  const parts: string[] = [`### 系统调用 \`${info.name}\`（${number}）`]
+  if (info.description !== undefined) {
+    parts.push(info.description)
+  }
+  if (info.args !== undefined && info.args.length > 0) {
+    parts.push(`**参数**: ${info.args.join(', ')}`)
+  }
+  if (info.ret !== undefined) {
+    parts.push(`**返回**: ${info.ret}`)
+  }
+  return parts.join('\n\n')
+}
+
+/**
+ * 系统调用号识别：`mov rax, imm`（x64）或 `mov eax, imm`（x86）上的立即数 token。
+ * 命中系统调用表时返回 Markdown，否则返回 null（回退指令 hover）。
+ */
+function syscallNumberHover(
+  parsed: ReturnType<typeof parseLine>,
+  tok: { type: string; value: string } | null,
+  abi: ABI,
+  stores: KnowledgeStores
+): string | null {
+  if (tok === null || tok.type !== 'integer' || parsed.kind !== 'instruction' || parsed.mnemonic !== 'mov') {
+    return null
+  }
+  const dst = parsed.operands[0]
+  const numberRegister = abi === 'linux-x86' ? 'eax' : 'rax'
+  if (dst?.type !== 'register' || dst.register !== numberRegister) {
+    return null
+  }
+  const value = parseImmediate(tok.value)
+  if (value === undefined) {
+    return null
+  }
+  const info = stores.syscalls.get(abi, value)
+  return info !== undefined ? syscallHover(value, info) : null
+}
+
 /** 光标处 hover：返回 Markdown 或 null。 */
 export function hoverAt(line: string, character: number, abi: ABI, stores: KnowledgeStores): string | null {
   const parsed = parseLine(line, 0)
-  if (parsed.kind !== 'instruction' || parsed.mnemonic === undefined) {
-    // 寄存器也可能出现在其他行型，仍然尝试
-    const tokens = tokenizeLine(line)
-    const tok = tokenAt(tokens, character)
+  const tokens = tokenizeLine(line)
+  const tok = tokenAt(tokens, character)
+
+  if (parsed.kind === 'instruction' && parsed.mnemonic !== undefined) {
+    const syscallHint = syscallNumberHover(parsed, tok, abi, stores)
+    if (syscallHint !== null) {
+      return syscallHint
+    }
     if (tok !== null && tok.type === 'register') {
       return registerHover(tok.value, abi, stores)
     }
-    return null
-  }
-  const tokens = tokenizeLine(line)
-  const tok = tokenAt(tokens, character)
-  if (tok === null) {
+    if (tok !== null && (tok.type === 'identifier' || tok.type === 'directive') && tok.value.toLowerCase() !== parsed.mnemonic) {
+      // 命中的不是助记符（如标签引用）→ 无 hover
+      return null
+    }
     return instructionHover(parsed.mnemonic, stores)
   }
-  if (tok.type === 'register') {
+
+  // 非指令行：仍尝试寄存器 hover
+  if (tok !== null && tok.type === 'register') {
     return registerHover(tok.value, abi, stores)
   }
-  if (tok.type === 'identifier' || tok.type === 'directive') {
-    // 命中的是助记符才显示指令 hover
-    if (tok.value.toLowerCase() === parsed.mnemonic) {
-      return instructionHover(parsed.mnemonic, stores)
-    }
-    return null
-  }
-  return instructionHover(parsed.mnemonic, stores)
+  return null
 }

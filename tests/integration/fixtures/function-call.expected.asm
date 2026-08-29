@@ -19,8 +19,8 @@ add_numbers:                    ; [nasm-commenter] 函数入口：add_numbers
     push rbp                    ; [nasm-commenter] 保存旧栈帧指针 rbp
     mov rbp, rsp                ; [nasm-commenter] 设置新栈帧指针：rbp = rsp
     sub rsp, 8                  ; [nasm-commenter] 分配 8 字节局部变量空间
-    mov dword [rbp-4], edi      ; [nasm-commenter] 将 edi 的值存储到内存 dword [rbp-4]
-    mov eax, [rbp-4]            ; [nasm-commenter] 从内存 [rbp-4] 加载值到 eax
+    mov dword [rbp-4], edi      ; [nasm-commenter] 将 edi 的值存储到内存 dword [rbp-4]（局部变量 4）
+    mov eax, [rbp-4]            ; [nasm-commenter] 从内存 [rbp-4] 加载值到 eax（局部变量 4）
     add eax, esi                ; [nasm-commenter] 将 esi 加到 eax
     leave                       ; [nasm-commenter] 恢复栈帧（rsp = rbp，弹出 rbp）
     ret                         ; [nasm-commenter] 返回调用者

@@ -53,6 +53,23 @@ function aliasChain(register: string): string[] {
   return chain
 }
 
+/** 子寄存器缓存：写入某寄存器后需要失效的全部下位寄存器（rax → eax/ax/al/ah）。 */
+const descendantCache = new Map<string, string[]>()
+
+function descendantsOf(register: string): string[] {
+  let list = descendantCache.get(register)
+  if (list === undefined) {
+    list = []
+    for (const name of REGISTERS.keys()) {
+      if (name !== register && aliasChain(name).includes(register)) {
+        list.push(name)
+      }
+    }
+    descendantCache.set(register, list)
+  }
+  return list
+}
+
 /** 应用单行对寄存器状态的影响；返回更新后的新状态（不修改入参）。 */
 export function applyLine(line: ParsedLine, state: RegisterStateMap): RegisterStateMap {
   const next: RegisterStateMap = { ...state }
@@ -68,6 +85,10 @@ export function applyLine(line: ParsedLine, state: RegisterStateMap): RegisterSt
   const writeReg = (reg: string, st: RegisterState): void => {
     for (const alias of aliasChain(reg)) {
       next[alias] = st
+    }
+    // 子寄存器的旧值不再成立（如写 rax 后 eax 残留）
+    for (const child of descendantsOf(reg)) {
+      delete next[child]
     }
   }
 

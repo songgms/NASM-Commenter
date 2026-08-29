@@ -108,27 +108,30 @@ export class DocumentContext {
     return String(state.value)
   }
 
-  /** 栈帧信息：指定行处于某个已识别序言之后则返回。 */
+  /** 栈帧信息：该行处于某个已识别序言之后、且其 epilogue 之前则返回。 */
   getStackFrameAt(lineNumber: number): StackFrameInfo | undefined {
-    let active: StackFrameInfo | undefined
+    // 起始行 <= lineNumber 的最近序言
+    let current: { start: number; frame: StackFrameInfo } | undefined
     for (const [start, frame] of this.stackFrames) {
       if (start <= lineNumber) {
-        // 到 leave / mov rsp,rbp 结束
-        for (let ln = start; ln <= lineNumber; ln++) {
-          const l = this.lines[ln]
-          if (l?.kind === 'instruction' && (l.mnemonic === 'leave' || (l.mnemonic === 'mov' && l.operands[0]?.raw.toLowerCase() === 'rsp' && l.operands[1]?.raw.toLowerCase() === 'rbp'))) {
-            if (ln < lineNumber) {
-              active = undefined
-              continue
-            }
-          }
-        }
-        if (active === undefined && lineNumber >= start) {
-          active = frame
-        }
+        current = { start, frame }
       }
     }
-    return active
+    if (current === undefined) {
+      return undefined
+    }
+    // 该序言与 lineNumber 之间若已出现 epilogue（leave / mov rsp,rbp）则栈帧已释放
+    for (let ln = current.start; ln < lineNumber; ln++) {
+      const l = this.lines[ln]
+      if (
+        l?.kind === 'instruction' &&
+        (l.mnemonic === 'leave' ||
+          (l.mnemonic === 'mov' && l.operands[0]?.raw.toLowerCase() === 'rsp' && l.operands[1]?.raw.toLowerCase() === 'rbp'))
+      ) {
+        return undefined
+      }
+    }
+    return current.frame
   }
 
   /** 循环信息（该行为回跳指令时）。 */
