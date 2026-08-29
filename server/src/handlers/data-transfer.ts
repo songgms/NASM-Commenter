@@ -17,10 +17,10 @@ function frameHint(line: ParsedLine, ctx: LineContextData | undefined): string {
     if (op.type === 'memory' && op.memory?.base === frame.baseRegister && typeof op.memory.displacement === 'number') {
       const disp = op.memory.displacement
       if (disp < 0) {
-        return `（局部变量 ${-disp}）`
+        return `(局部变量 ${-disp})`
       }
       if (disp > 0) {
-        return `（函数参数 ${disp}）`
+        return `(函数参数 ${disp})`
       }
     }
   }

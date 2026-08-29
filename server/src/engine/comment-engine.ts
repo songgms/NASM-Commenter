@@ -25,7 +25,7 @@ import { matchPatterns } from '../context/pattern-matcher'
 import { getHandler, annotateLabelLine } from '../handlers'
 import { generateFromTemplate, unknownResult, buildVars } from '../handlers/shared'
 import { renderTemplate } from './template-renderer'
-import { formatComment, toEdit, DEFAULT_MARKER, alignColumn } from './comment-formatter'
+import { formatComment, toEdit, alignColumn } from './comment-formatter'
 import { shouldSkip } from './deduplicator'
 import { hasExistingComment } from '../utils/indent'
 import type { LLMAdapter, LLMRequest } from '../llm/adapter'
@@ -43,7 +43,7 @@ export function formatOptionsOf(config: CommentConfig): FormatOptions {
     language: config.language,
     minColumn: config.minColumn,
     tabSize: 4,
-    marker: DEFAULT_MARKER,
+    marker: config.marker,
     verbose: config.verbose
   }
 }
@@ -100,13 +100,13 @@ export class CommentEngine {
     return this.finalize(line, result, config)
   }
 
-  /** 后置过滤：去重 → 保护已有注释。 */
+  /** 后置过滤：去重 → 保护已有注释（跳过时保留 comment 供移除流程匹配）。 */
   private finalize(line: ParsedLine, result: CommentResult | null, config: CommentConfig): CommentResult | null {
     if (result === null || result.skipped === true) {
       return result
     }
-    if (shouldSkip(line.raw, result.comment)) {
-      return { comment: '', confidence: 0, source: 'rule', skipped: true, skipReason: '注释未变化' }
+    if (shouldSkip(line.raw, result.comment, config.marker)) {
+      return { ...result, skipped: true, skipReason: '注释未变化' }
     }
     if (config.protectExistingComments && hasExistingComment(line.raw)) {
       return { comment: '', confidence: 0, source: 'rule', skipped: true, skipReason: '已有注释' }

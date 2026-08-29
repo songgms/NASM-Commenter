@@ -29,7 +29,7 @@ export function findDataDir(startDir: string = __dirname): string {
     }
     dir = parent
   }
-  throw new Error(`无法定位知识库数据目录（从 ${startDir} 向上查找失败）`)
+  throw new Error(`无法定位知识库数据目录 (从 ${startDir} 向上查找失败)`)
 }
 
 function readJsonFile(filePath: string): unknown {
@@ -103,7 +103,7 @@ export function loadKnowledge(dataDir?: string): KnowledgeData {
   }
 
   for (const w of issues) {
-    logger.warn(`知识库数据问题（条目已跳过）: ${w}`)
+    logger.warn(`知识库数据问题 (条目已跳过): ${w}`)
   }
 
   return { instructions, patterns, syscalls, registers }

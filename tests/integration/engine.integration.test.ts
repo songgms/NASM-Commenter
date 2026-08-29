@@ -105,15 +105,15 @@ describe('integration: engine end-to-end', () => {
     for (const e of edits) {
       expect(e.startCharacter).toBe(0)
       expect(e.endCharacter).toBe(0)
-      expect(e.newText).toMatch(/^[ \t]*; \[nasm-commenter\]/)
+      expect(e.newText).toMatch(/^[ \t]*; /)
       expect(e.newText.endsWith('\n')).toBe(true)
     }
     const applied = applyEditsToText(source, edits)
     // 新增行数 = 编辑数；所有含标记的行都是上方注释行
     expect(applied.split('\n').length).toBe(source.split('\n').length + edits.length)
     for (const line of applied.split('\n')) {
-      if (line.includes('[nasm-commenter]')) {
-        expect(line).toMatch(/^[ \t]*; \[nasm-commenter\]/)
+      if (line.includes('; [') || line.trimStart().startsWith('; ')) {
+        expect(line.trimStart().startsWith('; ')).toBe(true)
       }
     }
   })

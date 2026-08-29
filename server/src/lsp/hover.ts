@@ -26,9 +26,9 @@ export function instructionHover(mnemonic: string, stores: KnowledgeStores): str
   const parts: string[] = []
   parts.push(`### \`${mnemonic}\` — ${entry.summary}`)
   parts.push(entry.description)
-  parts.push(`**类别**: ${entry.category} · **标志位**: ${entry.flags_affected}`)
+  parts.push(`**类别**: ${entry.category} | **标志位**: ${entry.flags_affected}`)
   if (entry.operands_note !== undefined) {
-    parts.push(`💡 ${entry.operands_note}`)
+    parts.push(`${entry.operands_note}`)
   }
   const sigs = Object.keys(entry.templates ?? {})
   if (sigs.length > 0) {
@@ -48,7 +48,7 @@ export function registerHover(register: string, abi: ABI, stores: KnowledgeStore
 
 /** 系统调用 hover 内容。 */
 export function syscallHover(number: number, info: SyscallInfo): string {
-  const parts: string[] = [`### 系统调用 \`${info.name}\`（${number}）`]
+  const parts: string[] = [`### 系统调用 \`${info.name}\`(${number})`]
   if (info.description !== undefined) {
     parts.push(info.description)
   }

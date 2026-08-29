@@ -29,7 +29,7 @@ export const handleSegment: HandlerFunction = (line) => sectionComment(line)
 
 export const handleGlobal: HandlerFunction = (line) => {
   const names = (line.directiveArgs ?? []).join(', ')
-  return ruleResult(names.length > 0 ? `导出符号 ${names}（链接器可见）` : '导出符号')
+  return ruleResult(names.length > 0 ? `导出符号 ${names}(链接器可见)` : '导出符号')
 }
 
 export const handleExtern: HandlerFunction = (line) => {
@@ -61,7 +61,7 @@ export const handleBits: HandlerFunction = (line) => {
 
 export const handleDefault: HandlerFunction = (line) => {
   const args = (line.directiveArgs ?? []).join(' ')
-  return ruleResult(args.length > 0 ? `设置默认操作数/地址大小：${args}` : '设置默认操作数/地址大小')
+  return ruleResult(args.length > 0 ? `设置默认操作数/地址大小: ${args}` : '设置默认操作数/地址大小')
 }
 
 export const handleDefine: HandlerFunction = (line) => {

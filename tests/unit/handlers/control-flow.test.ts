@@ -15,11 +15,11 @@ describe('handlers/control-flow', () => {
     expect(getHandler('jmp')!(parseLine('jmp .loop', 0), undefined, stores, config)?.comment)
       .toBe('无条件跳转到 .loop')
     expect(getHandler('je')!(parseLine('je .done', 0), undefined, stores, config)?.comment)
-      .toBe('相等（ZF=1）时跳转到 .done')
+      .toBe('相等(ZF=1)时跳转到 .done')
     expect(getHandler('call')!(parseLine('call print_string', 0), undefined, stores, config)?.comment)
-      .toBe('调用函数 print_string（返回地址压栈）')
+      .toBe('调用函数 print_string(返回地址压栈)')
     expect(getHandler('ret')!(parseLine('ret', 0), undefined, stores, config)?.comment)
-      .toBe('从函数返回（弹出返回地址）')
+      .toBe('从函数返回(弹出返回地址)')
   })
 
   it('loop 指令说明隐含计数器', () => {

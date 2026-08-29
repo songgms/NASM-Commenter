@@ -37,8 +37,8 @@ import { resolveConfig } from './utils/config-defaults'
 import { logger } from './utils/logger'
 import { parseDocument } from './lexer'
 import { detectABI } from './utils/abi-detector'
-import { annotateSourceEnhanced, buildEdits, buildFunctionComment } from './engine/comment-engine'
-import { buildRemoveEdits, countAutoCommentLines, applyEditsToText } from './engine/deduplicator'
+import { annotateSource, annotateSourceEnhanced, buildEdits, buildFunctionComment } from './engine/comment-engine'
+import { applyEditsToText, buildRemoveEdits } from './engine/deduplicator'
 import { createLLMAdapter } from './llm'
 import type { LLMAdapter } from './llm'
 import { hoverAt } from './lsp/hover'
@@ -46,6 +46,7 @@ import { provideCodeActions } from './lsp/code-action'
 import { provideCompletions } from './lsp/completion'
 import { validateDocument } from './lsp/diagnostics'
 import type { DiagnosticData } from './lsp/diagnostics'
+import { findCommentStart } from './utils/indent'
 
 export class NASMLanguageServer {
   private connection = createConnection(ProposedFeatures.all)
@@ -128,7 +129,7 @@ export class NASMLanguageServer {
     try {
       const stores = buildStores(loadKnowledge())
       this.stores = stores
-      logger.info(`知识库加载完成：${stores.instructions.getAllMnemonics().length} 条指令`)
+      logger.info(`知识库加载完成: ${stores.instructions.getAllMnemonics().length} 条指令`)
     } catch (e) {
       logger.error(`知识库加载失败: ${String(e)}`)
       throw new ResponseError(NASMLanguageServer.ERR_INTERNAL, `NASM Commenter 知识库加载失败: ${String(e)}`)
@@ -286,23 +287,109 @@ export class NASMLanguageServer {
 
   private onRemoveComments(params: RemoveCommentsRequest): RemoveCommentsResponse {
     const doc = this.requireDoc(params.textDocument.uri)
-    const lines = doc.getText().split(/\r?\n/)
+    const text = doc.getText()
+    const lines = text.split(/\r?\n/)
+    const config = resolveConfig({ ...this.config, protectExistingComments: false })
+
+    // 标记模式：按 marker 扫描精确移除
+    if (config.marker.length > 0) {
+      const edits = []
+      for (let i = 0; i < lines.length; i++) {
+        edits.push(...buildRemoveEdits(lines[i], i, config.marker))
+      }
+      return { edits, count: edits.length }
+    }
+
+    // 内容匹配模式：重新生成规则注释，与行内现有注释一致的移除；
+    // `旧注释 / 新注释` 追加形式只剥离追加部分。LLM 增强的注释不参与（无法确定性重生成）。
+    const ann = annotateSource(text, this.requireStores(), config)
     const edits = []
-    for (let i = 0; i < lines.length; i++) {
-      edits.push(...buildRemoveEdits(lines[i], i))
+    const claimedAbove = new Set<number>()
+    for (const [lineNumber, result] of ann.comments) {
+      const gen = result.comment.trim()
+      if (gen.length === 0) {
+        continue
+      }
+      if (config.style === 'above') {
+        for (let i = 0; i < lines.length; i++) {
+          if (claimedAbove.has(i)) {
+            continue
+          }
+          const m = /^[ \t]*; (.+)$/.exec(lines[i])
+          if (m !== null && m[1].trim() === gen) {
+            claimedAbove.add(i)
+            const isLast = i === lines.length - 1
+            edits.push({
+              startLine: i,
+              startCharacter: 0,
+              endLine: isLast ? i : i + 1,
+              endCharacter: isLast ? lines[i].length : 0,
+              newText: ''
+            })
+            break
+          }
+        }
+        continue
+      }
+      const line = lines[lineNumber]
+      if (line === undefined) {
+        continue
+      }
+      const idx = findCommentStart(line)
+      if (idx < 0) {
+        continue
+      }
+      const existing = line.slice(idx + 1).trim()
+      if (existing === gen) {
+        let start = idx
+        while (start > 0 && /[ \t]/.test(line[start - 1])) {
+          start--
+        }
+        edits.push({
+          startLine: lineNumber,
+          startCharacter: start,
+          endLine: lineNumber,
+          endCharacter: line.length,
+          newText: ''
+        })
+        continue
+      }
+      const suffix = ` / ${gen}`
+      if (existing.endsWith(suffix)) {
+        const abs = idx + 1 + line.slice(idx + 1).lastIndexOf(suffix)
+        edits.push({
+          startLine: lineNumber,
+          startCharacter: abs,
+          endLine: lineNumber,
+          endCharacter: line.length,
+          newText: ''
+        })
+      }
     }
     return { edits, count: edits.length }
   }
 
-  /** 推送自动注释覆盖率（状态栏展示：带标记行 / 总行数）。 */
+  /** 推送注释覆盖率（状态栏展示：规则引擎可注释/已注释行 / 总行数）。 */
   private pushCoverage(doc: TextDocument, text?: string): void {
     const content = text ?? doc.getText()
+    let covered = 0
+    try {
+      const config = resolveConfig({ ...this.config, protectExistingComments: false })
+      const ann = annotateSource(content, this.requireStores(), config)
+      for (const result of ann.comments.values()) {
+        if (result.skipped !== true || result.skipReason === '注释未变化') {
+          covered++
+        }
+      }
+    } catch (e) {
+      logger.warn(`覆盖率统计失败: ${String(e)}`)
+    }
     const notification: StatsNotificationParams = {
       uri: doc.uri,
       abi: this.abiOf(doc),
       stats: {
         totalLines: content.split(/\r?\n/).length,
-        commentedLines: countAutoCommentLines(content),
+        commentedLines: covered,
         skippedLines: 0,
         bySource: { rule: 0, pattern: 0, context: 0, llm: 0, fallback: 0 }
       }

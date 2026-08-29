@@ -59,7 +59,7 @@ export interface FormatOptions {
   /** 行内注释最小对齐列 */
   minColumn: number
   tabSize: number
-  /** 自动注释标记，默认 `[nasm-commenter] ` */
+  /** 自动注释标记前缀（默认空 = 注释形如 `; 内容`；设置如 `[nasm-commenter] ` 启用标记模式） */
   marker: string
   /** 详细模式：附加 detail 说明 */
   verbose: boolean

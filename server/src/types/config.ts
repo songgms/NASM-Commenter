@@ -36,6 +36,11 @@ export interface CommentConfig {
   autoAnnotate: boolean
   /** 保护用户已有注释（默认 true） */
   protectExistingComments: boolean
+  /**
+   * 自动注释标记前缀（默认空 = 不带标记）。
+   * 设置如 `[nasm-commenter] ` 可恢复精确的标记式移除。
+   */
+  marker: string
   /** ABI：auto 为自动检测 */
   abi: ABI | 'auto'
   llm: LLMConfig

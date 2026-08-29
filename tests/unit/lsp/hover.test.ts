@@ -49,7 +49,7 @@ describe('hoverAt', () => {
 
   it('syscallHover 组装参数与返回说明', () => {
     const md = syscallHover(1, { name: 'write', description: '写文件', args: ['fd', 'buf', 'count'], ret: '写入的字节数' })
-    expect(md).toContain('（1）')
+    expect(md).toContain('(1)')
     expect(md).toContain('fd, buf, count')
     expect(md).toContain('写入的字节数')
   })

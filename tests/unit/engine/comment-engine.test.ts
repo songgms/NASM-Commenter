@@ -47,7 +47,7 @@ describe('comment-engine', () => {
 
   it('已有相同自动注释时跳过（幂等）', () => {
     const engine = new CommentEngine(stores)
-    const line = parseDocument('mov rax, 1    ; [nasm-commenter] 将立即数 1 加载到 rax', 0)[0]
+    const line = parseDocument('mov rax, 1    ; 将立即数 1 加载到 rax', 0)[0]
     const result = engine.annotateLine(line, undefined, config)
     expect(result?.skipped).toBe(true)
     expect(result?.skipReason).toBe('注释未变化')

@@ -38,6 +38,6 @@ describe('handlers/arithmetic', () => {
 
   it('imul 三操作数形式', () => {
     const result = getHandler('imul')!(parseLine('imul rax, rbx, 4', 0), undefined, stores, config)
-    expect(result?.comment).toBe('rax = rbx × 4（有符号）')
+    expect(result?.comment).toBe('rax = rbx × 4(有符号)')
   })
 })

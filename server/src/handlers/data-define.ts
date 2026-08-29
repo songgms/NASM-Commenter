@@ -13,15 +13,15 @@ interface DefineUnit {
 }
 
 const UNITS: Record<string, DefineUnit> = {
-  db: { unit: '字节（8 位）数据', reserve: false },
-  dw: { unit: '字（16 位）数据', reserve: false },
-  dd: { unit: '双字（32 位）数据', reserve: false },
-  dq: { unit: '四字（64 位）数据', reserve: false },
-  dt: { unit: '十字节（80 位）数据', reserve: false },
+  db: { unit: '字节 (8 位) 数据', reserve: false },
+  dw: { unit: '字 (16 位) 数据', reserve: false },
+  dd: { unit: '双字 (32 位) 数据', reserve: false },
+  dq: { unit: '四字 (64 位) 数据', reserve: false },
+  dt: { unit: '十字节 (80 位) 数据', reserve: false },
   resb: { unit: '字节', reserve: true },
-  resw: { unit: '字（16 位）', reserve: true },
-  resd: { unit: '双字（32 位）', reserve: true },
-  resq: { unit: '四字（64 位）', reserve: true }
+  resw: { unit: '字 (16 位)', reserve: true },
+  resd: { unit: '双字 (32 位)', reserve: true },
+  resq: { unit: '四字 (64 位)', reserve: true }
 }
 
 function makeDefineHandler(mnemonic: string): HandlerFunction {
@@ -31,7 +31,7 @@ function makeDefineHandler(mnemonic: string): HandlerFunction {
       return null
     }
     const args = line.directiveArgs ?? []
-    const label = line.label !== undefined ? `${line.label}：` : ''
+    const label = line.label !== undefined ? `${line.label}: ` : ''
     if (info.reserve) {
       const count = args.join(' ')
       return ruleResult(count.length > 0 ? `保留 ${count} 个${info.unit}未初始化空间` : `保留${info.unit}未初始化空间`)

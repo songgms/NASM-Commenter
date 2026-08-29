@@ -66,7 +66,7 @@ export function validateDocument(text: string, stores: KnowledgeStores): Diagnos
           line: line.lineNumber,
           character: tok.start,
           length: tok.end - tok.start,
-          message: `未知指令 "${line.mnemonic}"：知识库未收录，将生成兜底注释`,
+          message: `未知指令 "${line.mnemonic}": 知识库未收录，将生成兜底注释`,
           severity: 4
         })
       }

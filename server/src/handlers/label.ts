@@ -9,7 +9,7 @@ export const handleLabel: HandlerFunction = (line, ctx) => {
     return null
   }
   if (ctx?.inFunction && ctx.functionName === line.label) {
-    return ruleResult(`函数入口：${line.label}`)
+    return ruleResult(`函数入口: ${line.label}`)
   }
-  return ruleResult(`标签 ${line.label}（跳转目标）`)
+  return ruleResult(`标签 ${line.label}(跳转目标)`)
 }

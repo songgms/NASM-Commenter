@@ -16,7 +16,7 @@ function syscallComment(ctxSyscall: SyscallContext, stores: { syscalls: { getByN
   const info = ctxSyscall.name !== undefined
     ? stores.syscalls.getByName(ctxSyscall.abi, ctxSyscall.name)
     : undefined
-  return info?.description !== undefined ? `${base}：${info.description}` : base
+  return info?.description !== undefined ? `${base}: ${info.description}` : base
 }
 
 export const handleSyscall: HandlerFunction = (line, ctx, stores, config) => {

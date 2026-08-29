@@ -34,7 +34,7 @@ describe('handlers/data-transfer', () => {
   it('push rax / pop rax 栈语义', () => {
     const push = getHandler('push')!(parseLine('push rax', 0), undefined, stores, config)
     const pop = getHandler('pop')!(parseLine('pop rax', 0), undefined, stores, config)
-    expect(push?.comment).toBe('将 rax 压入栈（rsp 随之减小）')
+    expect(push?.comment).toBe('将 rax 压入栈(rsp 随之减小)')
     expect(pop?.comment).toBe('从栈弹出值到 rax')
   })
 

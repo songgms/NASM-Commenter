@@ -9,7 +9,7 @@ export {
   AUTO_MARKER,
   DEFAULT_MARKER
 } from './comment-formatter'
-export { shouldSkip, extractAutoComments, buildRemoveEdits, countAutoCommentLines, applyEditsToText } from './deduplicator'
+export { shouldSkip, existingComment, buildRemoveEdits, applyEditsToText } from './deduplicator'
 export {
   CommentEngine,
   buildEdits,

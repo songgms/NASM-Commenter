@@ -154,7 +154,7 @@ export function validatePatterns(
       return
     }
     if (typeof p.priority !== 'number') {
-      issues.push({ file, key: idKey, message: '缺少 priority（数字）' })
+      issues.push({ file, key: idKey, message: '缺少 priority (数字)' })
       return
     }
     if (!p.category || !categories.has(p.category)) {

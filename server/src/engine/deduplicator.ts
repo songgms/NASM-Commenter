@@ -1,46 +1,40 @@
 /**
- * 去重器：识别与移除 [nasm-commenter] 标记的自动注释。
- * 只动带标记的内容，用户手写注释不受影响。
+ * 去重与移除：识别既有自动注释并支持幂等生成。
+ *
+ * 两种模式：
+ * - 默认（marker 为空）：按「行内注释内容与当前生成结果一致」判定；移除由 server
+ *   基于生成结果构造（见 server.ts onRemoveComments）。
+ * - 标记模式（配置 marker，如 `[nasm-commenter] `）：注释携带标记，支持精确扫描移除。
  */
 import type { AnnotatedEdit } from '../types'
 import { findCommentStart } from '../utils/indent'
-import { AUTO_MARKER } from './comment-formatter'
 
-/** 提取行内所有自动注释内容（不含标记本身）。 */
-export function extractAutoComments(line: string): string[] {
+/**
+ * 提取行内注释文本（字符串中的分号不算；不含 `;` 本身）。
+ */
+export function existingComment(line: string): string {
   const idx = findCommentStart(line)
-  if (idx < 0) {
-    return []
-  }
-  const comment = line.slice(idx + 1)
-  const results: string[] = []
-  const from = 0
-  for (;;) {
-    const at = comment.indexOf(AUTO_MARKER, from)
-    if (at < 0) {
-      break
-    }
-    // 内容延伸到行尾或下一个用户注释边界（此处取到行尾）
-    results.push(comment.slice(at + AUTO_MARKER.length).trim())
-    break
-  }
-  return results
+  return idx < 0 ? '' : line.slice(idx + 1).trim()
 }
 
 /**
- * 如果行内已有内容相同的自动注释，返回 true（跳过重复生成）。
+ * 如果行内已有内容相同的注释（或 `旧注释 / 新注释` 追加形式），返回 true（跳过重复生成）。
+ * marker 模式下按「标记后内容一致」判定。
  */
-export function shouldSkip(line: string, generatedComment: string): boolean {
-  const existing = extractAutoComments(line)
-  const generated = generatedComment.trim()
-  return existing.some((e) => e === generated)
-}
-
-/**
- * 统计文本中包含自动注释标记的行数（状态栏覆盖率展示用）。
- */
-export function countAutoCommentLines(text: string): number {
-  return text.split(/\r?\n/).filter((line) => line.includes(AUTO_MARKER)).length
+export function shouldSkip(line: string, generatedComment: string, marker = ''): boolean {
+  const gen = generatedComment.trim()
+  if (gen.length === 0) {
+    return false
+  }
+  const existing = existingComment(line)
+  if (existing.length === 0) {
+    return false
+  }
+  if (marker.length > 0) {
+    const at = existing.indexOf(marker)
+    return at >= 0 && existing.slice(at + marker.length).trim() === gen
+  }
+  return existing === gen || existing.endsWith(` / ${gen}`)
 }
 
 /**
@@ -64,23 +58,25 @@ export function applyEditsToText(text: string, edits: AnnotatedEdit[]): string {
 }
 
 /**
- * 构造移除该行自动注释的编辑：
- * - 纯自动注释 → 移除整个注释（含 `; `）
- * - 用户注释后追加的自动注释 → 只移除 ` [nasm-commenter] ...` 尾部
- * 无自动注释时返回空数组。
+ * 标记模式下的移除编辑（按 marker 扫描，精确）：
+ * - 纯自动注释 → 移除整个注释（含 `; ` 与对齐空白）
+ * - 用户注释后追加的自动注释 → 只移除追加部分
+ * marker 为空时返回空数组（内容匹配模式由 server 基于生成结果构造）。
  */
-export function buildRemoveEdits(line: string, lineNumber: number): AnnotatedEdit[] {
+export function buildRemoveEdits(line: string, lineNumber: number, marker = ''): AnnotatedEdit[] {
+  if (marker.length === 0) {
+    return []
+  }
   const idx = findCommentStart(line)
   if (idx < 0) {
     return []
   }
   const commentStart = idx + 1
-  const markerAt = line.indexOf(AUTO_MARKER, commentStart)
+  const markerAt = line.indexOf(marker, commentStart)
   if (markerAt < 0) {
     return []
   }
-  const beforeMarker = line.slice(commentStart, markerAt)
-  const userPart = beforeMarker.trim()
+  const userPart = line.slice(commentStart, markerAt).trim()
   if (userPart.length === 0) {
     // 整个注释都是自动生成：连 `;` 一起移除，并吃掉注释前的空白
     let start = idx

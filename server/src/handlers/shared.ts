@@ -67,7 +67,7 @@ export function generateFromTemplate(
   }
   // 无匹配模板：用 description + 操作数兜底（确定性，仍属规则结果）
   const raws = line.operands.map((o) => o.raw).join(', ')
-  return ruleResult(raws.length > 0 ? `${entry.description}（${raws}）` : entry.description, entry.detail)
+  return ruleResult(raws.length > 0 ? `${entry.description}(${raws})` : entry.description, entry.detail)
 }
 
 /** 未知指令的兜底注释（低置信度）。 */

@@ -17,7 +17,7 @@ describe('handlers/system', () => {
 
   it('syscall 无上下文 → 模板兜底', () => {
     const result = getHandler('syscall')!(parseLine('syscall', 0), undefined, stores, config)
-    expect(result?.comment).toBe('发起系统调用（调用号在 rax）')
+    expect(result?.comment).toBe('发起系统调用(调用号在 rax)')
   })
 
   it('syscall 有回溯 → 调用名(参数值)：说明', () => {
@@ -33,7 +33,7 @@ describe('handlers/system', () => {
       line: 9
     }
     const result = getHandler('syscall')!(parseLine('syscall', 9), ctxWith(syscall), stores, config)
-    expect(result?.comment).toBe('调用 write(1, msg, 13)：写文件')
+    expect(result?.comment).toBe('调用 write(1, msg, 13): 写文件')
   })
 
   it('int 0x80 有回溯 → x86 调用名', () => {
@@ -50,7 +50,7 @@ describe('handlers/system', () => {
 
   it('int 0x80 无上下文 → 模板条件片段', () => {
     const result = getHandler('int')!(parseLine('int 0x80', 0), undefined, stores, config)
-    expect(result?.comment).toBe('触发 0x80 软中断（Linux 32 位系统调用入口）')
+    expect(result?.comment).toBe('触发 0x80 软中断(Linux 32 位系统调用入口)')
   })
 
   it('nop / hlt / cli / sti / cpuid', () => {

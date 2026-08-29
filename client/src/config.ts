@@ -16,6 +16,7 @@ export function getConfig(): CommentConfig {
     verbose: cfg.get<boolean>('verbose', false),
     autoAnnotate: cfg.get<boolean>('autoAnnotate', false),
     protectExistingComments: cfg.get<boolean>('protectExistingComments', true),
+    marker: cfg.get<string>('marker', ''),
     abi: 'auto',
     llm: {
       enabled: cfg.get<boolean>('llm.enabled', false),

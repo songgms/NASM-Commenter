@@ -7,9 +7,9 @@ import type { HandlerFunction } from './shared'
 
 const PREFIX_DESC: Record<string, string> = {
   rep: '重复 rcx 次',
-  repe: '条件重复（相等时继续）',
-  repne: '条件重复（不等时继续）',
-  repnz: '条件重复（不等时继续）',
+  repe: '条件重复 (相等时继续)',
+  repne: '条件重复 (不等时继续)',
+  repnz: '条件重复 (不等时继续)',
   lock: ''
 }
 
@@ -24,8 +24,8 @@ function makeStringHandler(mnemonic: string): HandlerFunction {
     if (prefix !== undefined && PREFIX_DESC[prefix]) {
       const count = ctx?.registers.rcx?.value
       comment = count !== undefined
-        ? `${comment}（${PREFIX_DESC[prefix]}，rcx = ${String(count)}）`
-        : `${comment}（${PREFIX_DESC[prefix]}）`
+        ? `${comment}(${PREFIX_DESC[prefix]}, rcx = ${String(count)})`
+        : `${comment}(${PREFIX_DESC[prefix]})`
     }
     return ruleResult(comment, result.detail, result.commentEn)
   }

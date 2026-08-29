@@ -7,11 +7,11 @@
 import type { CommentResult, FormatOptions, FormattedComment, ParsedLine } from '../types'
 import { findCommentStart, stripExistingComment } from '../utils/indent'
 
-/** 自动注释标记（不含尾随空格）。 */
+/** 自动注释标记（可选；默认空 = 不带标记）。 */
 export const AUTO_MARKER = '[nasm-commenter]'
 
-/** 默认标记（含尾随空格）。 */
-export const DEFAULT_MARKER = '[nasm-commenter] '
+/** 默认标记（空 = 不带标记，注释形如 `; 内容`）。 */
+export const DEFAULT_MARKER = ''
 
 /** 计算范围内行内注释的对齐列：max(minColumn, 最长代码 + 2)。 */
 export function alignColumn(codeLines: string[], minColumn: number): number {
@@ -29,16 +29,17 @@ export function alignColumn(codeLines: string[], minColumn: number): number {
 function composeText(result: CommentResult, options: FormatOptions): string {
   const main = options.language === 'en' && result.commentEn ? result.commentEn : result.comment
   if (options.verbose && result.detail) {
-    return `${main}（${result.detail}）`
+    return `${main}(${result.detail})`
   }
   return main
 }
 
 /**
  * 格式化单行注释。
- * - inline（无已有注释）：在代码末尾插入 `padding; [nasm-commenter] 内容`
- * - inline（已有用户注释且不保护）：替换整段注释为 `; 用户注释 [nasm-commenter] 新注释`
- * - above：在行首插入整行 `{indent}; [nasm-commenter] 内容\n`
+ * - inline（无已有注释）：在代码末尾插入 `padding; 内容`
+ * - inline（已有用户注释且不保护）：替换整段注释为 `; 用户注释 / 新注释`
+ * - above：在行首插入整行 `{indent}; 内容\n`
+ * marker 非空时内容前附带标记。
  */
 export function formatComment(
   line: ParsedLine,
@@ -62,11 +63,11 @@ export function formatComment(
   const code = stripExistingComment(line.raw).trimEnd()
   const codeLen = code.length
 
-  // 已有用户注释（保护关闭时才会走到这里）：替换从注释开始到行尾
+  // 已有用户注释（保护关闭时才会走到这里）：替换从注释开始到行尾，新注释以 ` / ` 追加
   if (line.comment !== undefined && line.comment.length > 0) {
     const commentStart = findCommentStart(line.raw)
     return {
-      text: `; ${line.comment.trim()} ${marked}`,
+      text: `; ${line.comment.trim()} / ${marked}`,
       insertLine: line.lineNumber,
       insertColumn: commentStart >= 0 ? commentStart : codeLen,
       isNewline: false,

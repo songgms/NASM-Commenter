@@ -5,11 +5,11 @@
 为 NASM 汇编代码自动生成高质量中文/英文注释的 VSCode 扩展。**离线规则引擎为主，LLM 为可选增强**——确定性、隐私友好、无 API Key 也完全可用。
 
 ```nasm
-mov rax, 1                  ; [nasm-commenter] 系统调用号 1（write）
-mov rdi, 1                  ; [nasm-commenter] 参数1：fd = 1（1 为 stdout）
-mov rsi, msg                ; [nasm-commenter] 参数2：输出缓冲区地址
-mov rdx, len                ; [nasm-commenter] 参数3：输出字节数
-syscall                     ; [nasm-commenter] 执行 write 系统调用输出字符串
+mov rax, 1                  ; 系统调用号 1 (write)
+mov rdi, 1                  ; 参数1: fd = 1 (1 为 stdout)
+mov rsi, msg                ; 参数2: 输出缓冲区地址
+mov rdx, len                ; 参数3: 输出字节数
+syscall                     ; 执行 write 系统调用输出字符串
 ```
 
 ## 功能
@@ -22,7 +22,7 @@ syscall                     ; [nasm-commenter] 执行 write 系统调用输出�
 - **自动补全**：命令位置补全指令名（附语义说明），操作数位置补全寄存器与文档标签
 - **实时诊断**：未知指令（Hint）、跳转到未定义标签（Warning）
 - **函数块注释**：一键生成 函数名/功能/参数/返回/破坏的寄存器
-- **精确移除**：所有自动注释带 `[nasm-commenter]` 标记，可批量移除，用户手写注释不受影响
+- **幂等与移除**：重复注释自动跳过；移除命令按规则引擎当前生成结果匹配移除，用户手写注释不受影响
 - **可选 LLM 增强**：OpenAI 兼容端点 / Ollama 本地模型，默认关闭；仅在规则引擎无法注释时介入，失败静默回退
 
 ## 命令与快捷键
@@ -33,7 +33,7 @@ syscall                     ; [nasm-commenter] 执行 write 系统调用输出�
 | `NASM Commenter: 注释选中区域` | `Ctrl+Shift+;` | 注释选中范围 |
 | `NASM Commenter: 注释整个文件` | — | 全文注释（幂等，已有注释自动跳过） |
 | `NASM Commenter: 注释当前函数` | — | 生成函数块注释 |
-| `NASM Commenter: 移除自动注释` | — | 仅移除带标记的自动注释 |
+| `NASM Commenter: 移除自动注释` | — | 移除规则引擎生成的注释（按当前生成结果匹配） |
 | `NASM Commenter: 切换行内/上方注释` | — | 切换注释样式 |
 
 ## 配置（`nasm-commenter.*`）
@@ -47,6 +47,7 @@ syscall                     ; [nasm-commenter] 执行 write 系统调用输出�
 | `verbose` | `false` | 详细模式（附加标志位与副作用说明） |
 | `autoAnnotate` | `false` | 保存时自动注释 |
 | `protectExistingComments` | `true` | 保护用户已有注释（不覆盖手写注释） |
+| `marker` | `""` | 自动注释标记前缀（默认空；设置 `[nasm-commenter] ` 可恢复标记与精确移除） |
 | `llm.enabled` | `false` | LLM 增强（规则引擎无法注释的行才调用） |
 | `llm.provider` | `openai` | openai（兼容端点）/ ollama |
 | `llm.apiKey` / `baseUrl` / `model` / `timeout` / `cache` | — | LLM 连接配置 |
@@ -134,6 +135,7 @@ npm run validate:schema  # 知识库数据校验
 | 系统调用表为常用子集（x64 157 条 / x86 152 条 / macOS 27 条） | 保证数据准确性；可按教程贡献指南补全 |
 | 命令 ID 使用 `annotateFile` 等命名（非 01/04 号的 `commentRange` 等） | 遵循 07 号教程的命名与优先级规则 |
 | 测试框架为 Vitest（非 05 号的 Mocha + Chai） | 07 号教程声明的优先级裁决 |
+| 移除 `[nasm-commenter]` 标记、注释标点改用英文半角（0.3.0 起） | 用户要求；移除命令改为按规则引擎当前生成结果匹配，`marker` 配置可恢复标记模式 |
 
 ## License
 

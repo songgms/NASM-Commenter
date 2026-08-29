@@ -11,7 +11,7 @@ const options: FormatOptions = {
   language: 'zh',
   minColumn: 32,
   tabSize: 4,
-  marker: '[nasm-commenter] ',
+  marker: '',
   verbose: false
 }
 
@@ -22,11 +22,11 @@ describe('comment-formatter', () => {
     const line = parseLine('    mov rax, 1', 7)
     const formatted = formatComment(line, result, options, 32)
     expect(formatted.insertLine).toBe(7)
-    expect(formatted.insertColumn).toBe(14) // 代码末尾（4 缩进 + 10 代码）
+    expect(formatted.insertColumn).toBe(14) // 代码末尾(4 缩进 + 10 代码)
     expect(formatted.isNewline).toBe(false)
     expect(formatted.replaceEnd).toBeUndefined()
     expect(formatted.text.startsWith(' '.repeat(32 - 14))).toBe(true)
-    expect(formatted.text).toContain('; [nasm-commenter] 将立即数 1 加载到 rax')
+    expect(formatted.text).toContain('; 将立即数 1 加载到 rax')
   })
 
   it('代码超过对齐列时保留最少 2 空格', () => {
@@ -40,7 +40,7 @@ describe('comment-formatter', () => {
     const formatted = formatComment(line, result, options)
     expect(formatted.replaceEnd).toBe(line.raw.length)
     expect(formatted.insertColumn).toBe(line.raw.indexOf(';'))
-    expect(formatted.text).toBe('; syscall [nasm-commenter] 将立即数 1 加载到 rax')
+    expect(formatted.text).toBe('; syscall / 将立即数 1 加载到 rax')
   })
 
   it('above：整行插入，缩进对齐', () => {
@@ -48,7 +48,13 @@ describe('comment-formatter', () => {
     const formatted = formatComment(line, result, { ...options, style: 'above' })
     expect(formatted.isNewline).toBe(true)
     expect(formatted.insertColumn).toBe(0)
-    expect(formatted.text).toBe('    ; [nasm-commenter] 将立即数 1 加载到 rax\n')
+    expect(formatted.text).toBe('    ; 将立即数 1 加载到 rax\n')
+  })
+
+  it('marker 配置时内容前附带标记', () => {
+    const line = parseLine('mov rax, 1', 0)
+    const formatted = formatComment(line, result, { ...options, marker: '[nasm-commenter] ' }, 32)
+    expect(formatted.text).toContain('; [nasm-commenter] 将立即数 1 加载到 rax')
   })
 
   it('英文语言使用 commentEn', () => {
@@ -62,7 +68,7 @@ describe('comment-formatter', () => {
     const detailed: CommentResult = { ...result, detail: '不影响标志位' }
     const line = parseLine('mov rax, 1', 0)
     const formatted = formatComment(line, detailed, { ...options, verbose: true }, 32)
-    expect(formatted.text).toContain('（不影响标志位）')
+    expect(formatted.text).toContain('(不影响标志位)')
   })
 
   it('alignColumn 计算范围内最长代码', () => {

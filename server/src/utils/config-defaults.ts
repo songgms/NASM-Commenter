@@ -13,6 +13,7 @@ export function defaultCommentConfig(): CommentConfig {
     verbose: false,
     autoAnnotate: false,
     protectExistingComments: true,
+    marker: '',
     abi: 'auto',
     llm: {
       enabled: false,

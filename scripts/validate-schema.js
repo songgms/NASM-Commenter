@@ -173,7 +173,7 @@ function main() {
   }
 
   if (errors.length > 0) {
-    console.error(`知识库验证失败（${errors.length} 个错误）:`)
+    console.error(`知识库验证失败 (${errors.length} 个错误):`)
     for (const e of errors) console.error(`  - ${e}`)
     process.exit(1)
   }

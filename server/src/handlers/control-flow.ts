@@ -8,7 +8,7 @@ import type { ParsedLine } from '../types'
 
 function withLoopHint(line: ParsedLine, ctx: { loop?: { label: string; endLine: number } } | undefined, comment: string): string {
   if (ctx?.loop && ctx.loop.endLine === line.lineNumber) {
-    return `${comment}（回跳到 ${ctx.loop.label} 构成循环）`
+    return `${comment}(回跳到 ${ctx.loop.label} 构成循环)`
   }
   return comment
 }

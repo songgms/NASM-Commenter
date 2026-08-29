@@ -58,7 +58,7 @@ export class OllamaAdapter implements LLMAdapter {
         return { comment: '', confidence: 0 }
       }
       cache?.set(key, comment)
-      logger.info(`LLM 请求完成 (${this.name}): ${request.instruction}，${Date.now() - startedAt}ms`)
+      logger.info(`LLM 请求完成 (${this.name}): ${request.instruction}, ${Date.now() - startedAt}ms`)
       return { comment, confidence: 0.8 }
     } catch (e) {
       logger.warn(`LLM 请求失败 (${this.name}, ${request.instruction}): ${String(e)}`)

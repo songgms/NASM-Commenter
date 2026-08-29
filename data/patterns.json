@@ -1,7 +1,7 @@
 [
   {
     "id": "function-prologue-standard",
-    "name": "函数序言（标准）",
+    "name": "函数序言(标准)",
     "description": "push rbp / mov rbp,rsp / sub rsp,N 标准函数序言",
     "sequence": ["push", "mov", "sub"],
     "operandConstraints": [
@@ -13,7 +13,7 @@
     ],
     "comments": [
       "保存旧栈帧指针 rbp",
-      "设置新栈帧指针：rbp = rsp",
+      "设置新栈帧指针: rbp = rsp",
       "分配 {imm} 字节局部变量空间"
     ],
     "comments_en": [
@@ -26,8 +26,8 @@
   },
   {
     "id": "function-prologue-leaf",
-    "name": "函数序言（叶函数）",
-    "description": "无 rbp 帧指针，直接 sub rsp,N 分配局部空间",
+    "name": "函数序言(叶函数)",
+    "description": "无 rbp 帧指针, 直接 sub rsp,N 分配局部空间",
     "sequence": ["sub"],
     "operandConstraints": [
       { "index": 0, "operand": 0, "mustBe": "rsp" },
@@ -44,11 +44,11 @@
   },
   {
     "id": "function-epilogue-leave-ret",
-    "name": "函数结尾（leave/ret）",
+    "name": "函数结尾(leave/ret)",
     "description": "leave 恢复栈帧后 ret 返回",
     "sequence": ["leave", "ret"],
     "comments": [
-      "恢复栈帧（rsp = rbp，弹出 rbp）",
+      "恢复栈帧(rsp = rbp, 弹出 rbp)",
       "返回调用者"
     ],
     "comments_en": [
@@ -60,7 +60,7 @@
   },
   {
     "id": "function-epilogue-mov-pop-ret",
-    "name": "函数结尾（mov/pop/ret）",
+    "name": "函数结尾(mov/pop/ret)",
     "description": "mov rsp,rbp / pop rbp / ret 恢复栈帧并返回",
     "sequence": ["mov", "pop", "ret"],
     "operandConstraints": [
@@ -69,7 +69,7 @@
       { "index": 1, "operand": 0, "mustBe": "rbp" }
     ],
     "comments": [
-      "恢复栈指针：rsp = rbp",
+      "恢复栈指针: rsp = rbp",
       "恢复帧指针 rbp",
       "返回调用者"
     ],
@@ -84,10 +84,10 @@
   {
     "id": "strlen-scan",
     "name": "strlen 字符串扫描",
-    "description": "repne scasb 查找字符串结尾 0 计算长度（repne 为同行的指令前缀）",
+    "description": "repne scasb 查找字符串结尾 0 计算长度(repne 为同行的指令前缀)",
     "sequence": ["repne scasb"],
     "comments": [
-      "重复扫描直到 [rdi] 字节等于 al（找到结尾 0，strlen 的实现）"
+      "重复扫描直到 [rdi] 字节等于 al(找到结尾 0, strlen 的实现)"
     ],
     "comments_en": [
       "repeat scanning until byte at [rdi] equals al (strlen idiom)"
@@ -109,10 +109,10 @@
       { "index": 3, "operand": 0, "mustBe": "rdx" }
     ],
     "comments": [
-      "系统调用号 1（write）",
-      "参数1：fd = {imm}（1 为 stdout）",
-      "参数2：输出缓冲区地址",
-      "参数3：输出字节数",
+      "系统调用号 1(write)",
+      "参数1: fd = {imm}(1 为 stdout)",
+      "参数2: 输出缓冲区地址",
+      "参数3: 输出字节数",
       "执行 write 系统调用输出字符串"
     ],
     "comments_en": [
@@ -127,7 +127,7 @@
   },
   {
     "id": "exit-syscall-xor",
-    "name": "exit 系统调用（清零参数）",
+    "name": "exit 系统调用(清零参数)",
     "description": "mov rax,60 / xor rdi,rdi / syscall 以退出码 0 终止进程",
     "sequence": ["mov", "xor", "syscall"],
     "operandConstraints": [
@@ -137,8 +137,8 @@
       { "index": 1, "operand": 1, "sameAs": [1, 0] }
     ],
     "comments": [
-      "系统调用号 60（exit）",
-      "参数1：退出码 0（rdi 自异或清零）",
+      "系统调用号 60(exit)",
+      "参数1: 退出码 0(rdi 自异或清零)",
       "执行 exit 系统调用终止进程"
     ],
     "comments_en": [
@@ -151,7 +151,7 @@
   },
   {
     "id": "exit-syscall-mov",
-    "name": "exit 系统调用（mov 参数）",
+    "name": "exit 系统调用(mov 参数)",
     "description": "mov rax,60 / mov rdi,code / syscall 终止进程",
     "sequence": ["mov", "mov", "syscall"],
     "operandConstraints": [
@@ -161,8 +161,8 @@
       { "index": 1, "operand": 1, "isImmediate": true }
     ],
     "comments": [
-      "系统调用号 60（exit）",
-      "参数1：退出码 {imm}",
+      "系统调用号 60(exit)",
+      "参数1: 退出码 {imm}",
       "执行 exit 系统调用终止进程"
     ],
     "comments_en": [
@@ -185,7 +185,7 @@
     "comments": [
       "初始化计数器 {dst}",
       "计数器 {dst} 递减 1",
-      "计数器非零（ZF=0）时跳回循环开始"
+      "计数器非零(ZF=0)时跳回循环开始"
     ],
     "comments_en": [
       "initialize counter {dst}",
