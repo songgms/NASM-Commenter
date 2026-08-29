@@ -5,7 +5,8 @@ import { CompletionItemKind } from 'vscode-languageserver/node'
 import type { CompletionItem } from 'vscode-languageserver/node'
 import type { KnowledgeStores } from '../knowledge'
 import { tokenizeLine } from '../lexer/tokenizer'
-import { REGISTERS } from '../lexer/token-definitions'
+import { REGISTERS, INSTRUCTION_PREFIXES } from '../lexer/token-definitions'
+import { findCommentStart } from '../utils/indent'
 
 /** 携带跳转目标语义的助记符（操作数位置优先补全标签）。 */
 const JUMP_MNEMONICS = new Set([
@@ -77,6 +78,7 @@ function labelItems(labelNames: string[], prefix: string): CompletionItem[] {
 
 /**
  * 生成光标处补全列表：
+ * - 注释内 → 无补全
  * - 命令位置（行首/标签后）→ 指令名
  * - 跳转指令操作数位置 → 标签优先，其次寄存器
  * - 其他操作数位置 → 寄存器 + 标签
@@ -87,6 +89,12 @@ export function provideCompletions(
   stores: KnowledgeStores,
   labelNames: string[]
 ): CompletionItem[] {
+  // 光标处于注释内（或注释之后）不提供补全
+  const commentStart = findCommentStart(lineText)
+  if (commentStart >= 0 && character > commentStart) {
+    return []
+  }
+
   const { prefix, tokensBefore } = wordPrefixAt(lineText, character)
 
   const meaningful = tokensBefore.filter((t) => t.type !== 'whitespace')
@@ -97,8 +105,11 @@ export function provideCompletions(
     return mnemonicItems(stores, prefix)
   }
 
-  // 跳转指令操作数位置：标签优先
-  const prevMnemonic = meaningful.find((t) => t.type === 'identifier')?.value.toLowerCase()
+  // 跳转指令操作数位置：标签优先（取最后一个标识符作为助记符，兼容标签同行）
+  const prevMnemonic = [...meaningful]
+    .reverse()
+    .find((t) => t.type === 'identifier' && !INSTRUCTION_PREFIXES.has(t.value.toLowerCase()))
+    ?.value.toLowerCase()
   if (last.type === 'identifier' && prevMnemonic !== undefined && JUMP_MNEMONICS.has(prevMnemonic)) {
     return [...labelItems(labelNames, prefix), ...registerItems(prefix)]
   }

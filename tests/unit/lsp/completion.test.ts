@@ -56,6 +56,19 @@ describe('provideCompletions', () => {
     expect(labels).not.toContain('rax')
   })
 
+  it('注释内不提供补全', () => {
+    expect(provideCompletions('mov rax, 1 ; ra', 15, stores, LABELS)).toEqual([])
+    expect(provideCompletions('mov rax, 1 ; x', 12, stores, LABELS)).toEqual([])
+    expect(provideCompletions('mov rax, ', 9, stores, LABELS).length).toBeGreaterThan(0)
+  })
+
+  it('标签同行时的跳转指令仍标签优先', () => {
+    const items = provideCompletions('start: jmp ', 11, stores, ['dest'])
+    const labels = items.map((i) => i.label)
+    expect(labels).toContain('dest')
+    expect(labels[0]).toBe('dest')
+  })
+
   it('寄存器补全带位宽说明', () => {
     const items = provideCompletions('mov ', 4, stores, LABELS)
     const rax = items.find((i) => i.label === 'rax')!
