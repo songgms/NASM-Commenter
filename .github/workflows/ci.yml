@@ -43,6 +43,18 @@ jobs:
       - name: Snapshot tests (no update allowed in CI)
         run: npm run test:snapshot
 
+      - name: Package VSIX
+        if: matrix.node-version == '20.x'
+        run: npx vsce package
+
+      - name: Upload VSIX artifact
+        if: matrix.node-version == '20.x'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nasm-commenter-vsix
+          path: '*.vsix'
+          if-no-files-found: error
+
   data-only-check:
     # 数据贡献（仅改 data/ 或 schemas/）的快速反馈通道
     runs-on: ubuntu-latest

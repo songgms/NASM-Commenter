@@ -21,7 +21,7 @@ function makeStringHandler(mnemonic: string): HandlerFunction {
     }
     let comment = result.comment
     const prefix = line.prefixes?.[0]
-    if (prefix !== undefined && PREFIX_DESC[prefix] !== undefined && PREFIX_DESC[prefix] !== '') {
+    if (prefix !== undefined && PREFIX_DESC[prefix]) {
       const count = ctx?.registers.rcx?.value
       comment = count !== undefined
         ? `${comment}（${PREFIX_DESC[prefix]}，rcx = ${String(count)}）`

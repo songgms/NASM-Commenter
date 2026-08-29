@@ -5,6 +5,16 @@
 
 ## [Unreleased]
 
+### Added
+
+- 扩展图标：脚本生成的汇编分号标识（`assets/icon.png`，零依赖 PNG 生成器）
+
+### Changed
+
+- 诊断推送增加 300ms 防抖，编辑大文件更流畅
+- CI 在 Node 20 上打包并上传 VSIX 构建产物
+- README 新增安装章节与 CI 徽章
+
 ## [0.2.0] - 2026-08-29
 
 ### Added

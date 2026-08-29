@@ -27,6 +27,7 @@
   "activationEvents": [
     "onLanguage:nasm"
   ],
+  "icon": "assets/icon.png",
   "main": "./dist/client/extension.js",
   "contributes": {
     "languages": [

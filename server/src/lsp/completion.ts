@@ -7,13 +7,7 @@ import type { KnowledgeStores } from '../knowledge'
 import { tokenizeLine } from '../lexer/tokenizer'
 import { REGISTERS, INSTRUCTION_PREFIXES } from '../lexer/token-definitions'
 import { findCommentStart } from '../utils/indent'
-
-/** 携带跳转目标语义的助记符（操作数位置优先补全标签）。 */
-const JUMP_MNEMONICS = new Set([
-  'jmp', 'call', 'loop',
-  'je', 'jne', 'jz', 'jnz', 'jg', 'jge', 'jl', 'jle', 'ja', 'jae', 'jb', 'jbe',
-  'js', 'jns', 'jc', 'jnc', 'jo', 'jno'
-])
+import { JUMP_MNEMONICS } from './shared'
 
 /** 提供补全时已输入的前缀（命令位置的单词）。 */
 function wordPrefixAt(lineText: string, character: number): { prefix: string; tokensBefore: { type: string; value: string }[] } {

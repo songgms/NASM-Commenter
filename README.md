@@ -1,5 +1,7 @@
 # NASM Commenter
 
+[![CI](https://github.com/songgms/NASM-Commenter/actions/workflows/ci.yml/badge.svg)](https://github.com/songgms/NASM-Commenter/actions/workflows/ci.yml)
+
 为 NASM 汇编代码自动生成高质量中文/英文注释的 VSCode 扩展。**离线规则引擎为主，LLM 为可选增强**——确定性、隐私友好、无 API Key 也完全可用。
 
 ```nasm
@@ -62,6 +64,12 @@ VSCode (client/src)  --JSON-RPC over IPC-->  Language Server (server/src)
 - **知识库数据驱动**（`data/*.json`）：新增指令支持只需编辑 JSON，社区可贡献，JSON Schema 校验
 - **Server 无状态 handler + 上下文追踪**：模板 → 模式 → 上下文增强 → LLM 兜底 的分层生成
 - 详见 [docs/01-architecture-and-lsp.md](./docs/01-architecture-and-lsp.md)
+
+## 安装
+
+- **从 VSIX**：`code --install-extension nasm-commenter-<版本>.vsix`，或在扩展视图 `···` → 「从 VSIX 安装...」；构建产物见仓库 Release / CI Artifacts
+- **从源码**：`npm install && npm run build && npx vsce package`，然后按上述方式安装生成的 `.vsix`；调试直接 F5
+- **Marketplace**：计划中
 
 ## 开发
 

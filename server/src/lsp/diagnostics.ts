@@ -7,6 +7,7 @@ import type { KnowledgeStores } from '../knowledge'
 import { parseDocument } from '../lexer/line-parser'
 import { tokenizeLine } from '../lexer/tokenizer'
 import { INSTRUCTION_PREFIXES } from '../lexer/token-definitions'
+import { JUMP_MNEMONICS } from './shared'
 
 /** 诊断严重级别（与 LSP DiagnosticSeverity 对齐：2=Warning，4=Hint）。 */
 export type DiagnosticSeverityValue = 2 | 4
@@ -19,13 +20,6 @@ export interface DiagnosticData {
   message: string
   severity: DiagnosticSeverityValue
 }
-
-/** 携带跳转目标的助记符。 */
-const JUMP_MNEMONICS = new Set([
-  'jmp', 'call', 'loop',
-  'je', 'jne', 'jz', 'jnz', 'jg', 'jge', 'jl', 'jle', 'ja', 'jae', 'jb', 'jbe',
-  'js', 'jns', 'jc', 'jnc', 'jo', 'jno'
-])
 
 /** 定位指令助记符 token（跳过标签对与指令前缀）。 */
 function mnemonicToken(line: ParsedLine): { start: number; end: number; value: string } | null {

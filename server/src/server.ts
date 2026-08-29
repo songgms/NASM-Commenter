@@ -55,6 +55,8 @@ export class NASMLanguageServer {
   private llm: LLMAdapter | undefined
   /** 每文档 ABI 检测缓存（按版本失效） */
   private abiCache = new Map<string, { version: number; abi: ReturnType<typeof detectABI> }>()
+  /** 诊断防抖定时器（按 uri） */
+  private readonly diagTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
   /** 依据最新配置重建 LLM 适配器（未启用或 provider 缺失时为 undefined）。 */
   private refreshLLM(): void {
@@ -90,10 +92,15 @@ export class NASMLanguageServer {
     })
     this.documents.onDidChangeContent((event) => {
       this.abiCache.delete(event.document.uri)
-      this.validateAndPush(event.document)
+      this.validateAndPushDebounced(event.document)
     })
     this.documents.onDidClose((event) => {
       this.abiCache.delete(event.document.uri)
+      const timer = this.diagTimers.get(event.document.uri)
+      if (timer !== undefined) {
+        clearTimeout(timer)
+        this.diagTimers.delete(event.document.uri)
+      }
       void this.connection.sendDiagnostics({ uri: event.document.uri, diagnostics: [] })
     })
     this.connection.onDidChangeConfiguration((params) => {
@@ -304,5 +311,18 @@ export class NASMLanguageServer {
       source: 'nasm-commenter'
     }))
     void this.connection.sendDiagnostics({ uri: doc.uri, diagnostics })
+  }
+
+  /** 编辑触发的诊断推送带 300ms 防抖，避免每次按键全量校验。 */
+  private validateAndPushDebounced(doc: TextDocument): void {
+    const existing = this.diagTimers.get(doc.uri)
+    if (existing !== undefined) {
+      clearTimeout(existing)
+    }
+    const timer = setTimeout(() => {
+      this.diagTimers.delete(doc.uri)
+      this.validateAndPush(doc)
+    }, 300)
+    this.diagTimers.set(doc.uri, timer)
   }
 }
