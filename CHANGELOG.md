@@ -5,6 +5,31 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-06
+
+### Added
+
+- 预处理器增强：简单 %macro 解析与单行展开、%if 条件块跟踪、不平衡诊断、%include 符号合并（深度限 3）
+- struc/endstruc 结构体解析：字段偏移表；Struct.field 引用注释与 Hover 显示偏移/大小
+- SIMD 知识库 +60 条（SSE/AVX 常用指令，中英模板）；movsd/cmpsd 与串指令同名按 xmm 操作数路由
+- 模式 +19：批量寄存器保存/恢复、rep movs 内存拷贝、cmp+jcc 成对条件分支
+- 符号导航：转到定义、查找引用、重命名、文档大纲（documentSymbol）
+- 诊断 +5：标签重复定义、栈帧失衡、寄存器无效赋值、预处理嵌套不匹配、内存-内存操作
+- 基础格式化（format.enable）：标签/助记符/操作数列对齐，不破坏注释
+- 虚拟注释 virtual.scope（all/textOnly）；;; 双分号风格（semicolonStyle）
+- 函数块注释模板可配置（annotate.functionTemplate）
+- LLM augmentMode（supplement 默认=仅虚拟预览 / fallback=写入）、confidenceThreshold、promptTemplate
+- LLM 缓存按工作区隔离；clearLlmCache 命令
+- 新命令：跳转第一个未注释行（Ctrl+Alt+U）、选中区域块头注释、清空 LLM 缓存
+- 寄存器追踪：跳转汇合点多来源状态合并（同值保留/异值 unknown）
+- 系统调用：freebsd-x64 与 macos-x86 数据表；read/write/open 补充错误码语义
+- 知识库预览 CLI（scripts/preview-template.js）；npm bin（nasm-commenter-server，Neovim 等可用）
+
+### Changed
+
+- protectExistingComments 语义重构：开启=手写注释保留并追加自动注释；关闭=已有注释行整体跳过
+- 虚拟注释按文档版本缓存并支持 LLM 增强（supplement 模式下 LLM 仅出现在预览）
+
 ## [0.6.0] - 2026-08-29
 
 ### Added

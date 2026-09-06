@@ -17,7 +17,7 @@ function loadExpected(name: string): string {
   return fs.readFileSync(path.join(FIXTURE_DIR, `${name}.expected.asm`), 'utf-8')
 }
 
-const FIXTURES = ['hello-world', 'function-call', 'loop', 'syscall', 'mixed'] as const
+const FIXTURES = ['hello-world', 'function-call', 'loop', 'syscall', 'mixed', 'complex-macro', 'struct'] as const
 
 describe('integration: engine end-to-end', () => {
   const stores = getStores()

@@ -9,7 +9,7 @@ import { annotateSource, buildEdits } from '../../server/src/engine/comment-engi
 import { applyEditsToText, getStores, testConfig } from '../helpers'
 
 const FIXTURE_DIR = path.join(__dirname, '..', 'integration', 'fixtures')
-const SNAPSHOTS = ['hello-world', 'function-call', 'loop', 'syscall', 'mixed'] as const
+const SNAPSHOTS = ['hello-world', 'function-call', 'loop', 'syscall', 'mixed', 'complex-macro', 'struct'] as const
 const UPDATE = process.env.UPDATE_SNAPSHOTS === '1'
 
 describe('snapshot: annotated fixtures', () => {
