@@ -292,7 +292,7 @@
     "@vscode/vsce": "^3.2.0",
     "eslint": "^8.57.1",
     "typescript": "^5.6.3",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.11"
   },
   "bin": {
     "nasm-commenter-server": "./dist/server/index.js"
