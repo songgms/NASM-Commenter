@@ -5,9 +5,6 @@
 import type { ParsedLine, StructDef } from '../types'
 import type { MacroDef } from '../lexer/preprocessor'
 import { tokenizeLine } from '../lexer/tokenizer'
-import { parseStructs } from './struct-table'
-import { analyzePreprocessor } from '../lexer/preprocessor'
-import { parseDocument } from '../lexer/line-parser'
 
 export type NASMSymbolKind = 'label' | 'function' | 'define' | 'macro' | 'struct-field'
 
@@ -164,12 +161,4 @@ export function buildSymbolTable(
   }
 
   return symbols
-}
-
-/** 收集整个文档的符号（标签/函数/常量/宏/结构体，一步到位）。 */
-export function buildDocumentSymbols(text: string): SymbolEntry[] {
-  const lines = parseDocument(text)
-  const analysis = analyzePreprocessor(text)
-  const structs = parseStructs(lines)
-  return buildSymbolTable(lines, analysis.defines, analysis.macros, structs)
 }

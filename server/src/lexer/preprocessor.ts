@@ -6,7 +6,7 @@
  *   %macro/%if 等结构，否则标记 nested 并给出 Hint 诊断）
  * - %if/%elif/%else/%endif 只做配对跟踪（不做条件求值）；块内行记入
  *   conditionalLines（条件汇编不确定提示）；配对不匹配给出 Warning 诊断
- * - %include 只记录路径（符号合并由 server 层解析文件完成）
+ * - %include 记录路径（调用方用 resolveIncludeSymbols 完成符号合并）
  * - %macro / %include 初期返回原始行不展开（多行宏由注释引擎按「调用宏」标注）
  */
 import * as fs from 'fs'
@@ -185,7 +185,7 @@ export function parsePreprocessorLine(line: string, lineNumber: number, state: P
     return
   }
 
-  // %include：记录路径（符号合并由 server 层完成）
+  // %include：记录路径（调用方用 resolveIncludeSymbols 完成符号合并）
   if (/^%include\b/i.test(trimmed)) {
     const m = /^%include\s+(.+)$/i.exec(trimmed)
     if (m) {

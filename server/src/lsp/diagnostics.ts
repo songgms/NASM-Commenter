@@ -108,10 +108,6 @@ export function validateDocument(text: string, stores: KnowledgeStores): Diagnos
   }
 
   diagnostics.push(...unusedLabelDiagnostics(lines, labels, defLineByLabel))
-  diagnostics.push(...duplicateLabelDiagnostics(lines, labelDefs))
-  diagnostics.push(...stackImbalanceDiagnostics(lines, labelDefs))
-  diagnostics.push(...registerOverwriteDiagnostics(lines))
-  diagnostics.push(...memToMemDiagnostics(lines))
   return diagnostics
 }
 

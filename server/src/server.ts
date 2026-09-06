@@ -39,13 +39,16 @@ import type { KnowledgeStores } from './knowledge'
 import { loadKnowledge, buildStores } from './knowledge'
 import { resolveConfig } from './utils/config-defaults'
 import { logger } from './utils/logger'
-import { collectDefines, parseDocument, tokenizeLine } from './lexer'
+import { parseDocument, tokenizeLine } from './lexer'
 import { hashString } from './utils/hash'
+import * as path from 'path'
+import { fileURLToPath } from 'url'
 import { parseStructs } from './context/struct-table'
 import { buildSymbolTable } from './context/symbol-table'
 import type { SymbolEntry } from './context/symbol-table'
 import { formatDocumentEdits } from './lsp/formatting'
-import { analyzePreprocessor } from './lexer/preprocessor'
+import type { MacroDef } from './lexer/preprocessor'
+import { analyzePreprocessor, resolveIncludeSymbols } from './lexer/preprocessor'
 import { detectABI } from './utils/abi-detector'
 import { annotateSource, annotateSourceEnhanced, buildEdits, buildFunctionComment, countCoveredLines } from './engine/comment-engine'
 import { buildRemoveEdits } from './engine/deduplicator'
@@ -87,6 +90,8 @@ export class NASMLanguageServer {
   private structsCache = new Map<string, { version: number; structs: Map<string, StructDef> }>()
   /** 每文档符号表缓存（按版本失效） */
   private symbolsCache = new Map<string, { version: number; symbols: SymbolEntry[] }>()
+  /** 每文档预处理符号缓存（含 %include 合并，按版本失效） */
+  private preprocessCache = new Map<string, { version: number; defines: Map<string, string>; macros: Map<string, MacroDef> }>()
   /** 诊断防抖定时器（按 uri） */
   private readonly diagTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -263,15 +268,38 @@ export class NASMLanguageServer {
     }
   }
 
-  /** 每文档 %define 常量表（按版本缓存）。 */
-  private definesOf(doc: TextDocument): Map<string, string> {
-    const cached = this.definesCache.get(doc.uri)
+  /** 每文档预处理符号（含 %include 合并；按版本缓存）。 */
+  private preprocessSymbolsOf(doc: TextDocument): {
+    defines: Map<string, string>
+    macros: Map<string, MacroDef>
+  } {
+    const cached = this.preprocessCache.get(doc.uri)
     if (cached !== undefined && cached.version === doc.version) {
-      return cached.defines
+      return cached
     }
-    const defines = collectDefines(doc.getText())
-    this.definesCache.set(doc.uri, { version: doc.version, defines })
-    return defines
+    const docDir = this.docDirectory(doc.uri)
+    const merged = resolveIncludeSymbols(doc.getText(), docDir)
+    const result = { version: doc.version, defines: merged.defines, macros: merged.macros }
+    this.preprocessCache.set(doc.uri, result)
+    return result
+  }
+
+  /** 从 file:// URI 解析文档目录；非 file 协议返回 undefined（跳过 include 合并）。 */
+  private docDirectory(uri: string): string | undefined {
+    if (!uri.startsWith('file://')) {
+      return undefined
+    }
+    try {
+      return path.dirname(fileURLToPath(uri))
+    } catch {
+      return undefined
+    }
+  }
+
+  /** 每文档 %define 常量表（按版本缓存，含 %include 合并）。 */
+  private definesOf(doc: TextDocument): Map<string, string> {
+    const symbols = this.preprocessSymbolsOf(doc)
+    return symbols.defines
   }
 
   /** 每文档结构体表（按版本缓存）。 */
@@ -332,6 +360,13 @@ export class NASMLanguageServer {
           seen.add(name)
           labelNames.push(name)
         }
+      }
+    }
+    // %include 引入的常量/宏同样参与补全
+    for (const [name] of this.preprocessSymbolsOf(doc).defines) {
+      if (!seen.has(name)) {
+        seen.add(name)
+        labelNames.push(name)
       }
     }
     return provideCompletions(lineText, params.position.character, stores, labelNames)
@@ -634,18 +669,16 @@ export class NASMLanguageServer {
     this.diagTimers.set(doc.uri, timer)
   }
 
-  /** 每文档符号表（按版本缓存）。 */
+  /** 每文档符号表（按版本缓存，%define/宏来自 include 合并结果）。 */
   private symbolsOf(doc: TextDocument): SymbolEntry[] {
     const cached = this.symbolsCache.get(doc.uri)
     if (cached !== undefined && cached.version === doc.version) {
       return cached.symbols
     }
-    const text = doc.getText()
-    const analysis = analyzePreprocessor(text)
     const symbols = buildSymbolTable(
-      parseDocument(text),
-      analysis.defines,
-      analysis.macros,
+      parseDocument(doc.getText()),
+      this.preprocessSymbolsOf(doc).defines,
+      this.preprocessSymbolsOf(doc).macros,
       this.structsOf(doc)
     )
     this.symbolsCache.set(doc.uri, { version: doc.version, symbols })
