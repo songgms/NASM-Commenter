@@ -36,6 +36,8 @@ export interface CommentConfig {
   autoAnnotate: boolean
   /** 保护用户已有注释（默认 true） */
   protectExistingComments: boolean
+  /** 基础格式化（标签/助记符/操作数对齐，默认关闭） */
+  format: { enable: boolean }
   /** 虚拟注释预览（Inlay Hint 幽灵文字，不修改文档；默认 true） */
   virtual: boolean
   /**

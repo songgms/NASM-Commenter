@@ -2,7 +2,7 @@
   "name": "nasm-commenter",
   "displayName": "NASM Commenter",
   "description": "为 NASM 汇编代码自动生成高质量注释：离线规则引擎 + 可选 LLM 增强",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "publisher": "nasm-commenter",
   "author": "nasm-commenter contributors",
   "license": "MIT",
@@ -193,6 +193,11 @@
           "type": "boolean",
           "default": true,
           "description": "缓存 LLM 结果，避免重复请求"
+        },
+        "nasm-commenter.format.enable": {
+          "type": "boolean",
+          "default": false,
+          "description": "基础格式化：标签/助记符/操作数对齐（Shift+Alt+F 触发）"
         }
       }
     }

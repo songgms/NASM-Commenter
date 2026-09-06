@@ -39,8 +39,12 @@ import type { KnowledgeStores } from './knowledge'
 import { loadKnowledge, buildStores } from './knowledge'
 import { resolveConfig } from './utils/config-defaults'
 import { logger } from './utils/logger'
-import { collectDefines, parseDocument } from './lexer'
+import { collectDefines, parseDocument, tokenizeLine } from './lexer'
 import { parseStructs } from './context/struct-table'
+import { buildSymbolTable } from './context/symbol-table'
+import type { SymbolEntry } from './context/symbol-table'
+import { formatDocumentEdits } from './lsp/formatting'
+import { analyzePreprocessor } from './lexer/preprocessor'
 import { detectABI } from './utils/abi-detector'
 import { annotateSource, annotateSourceEnhanced, buildEdits, buildFunctionComment, countCoveredLines } from './engine/comment-engine'
 import { buildRemoveEdits } from './engine/deduplicator'
@@ -48,6 +52,13 @@ import { stripAllCommentsEdits } from './engine/strip-comments'
 import { createLLMAdapter } from './llm'
 import type { LLMAdapter } from './llm'
 import { hoverAt } from './lsp/hover'
+import {
+  Location,
+  DocumentSymbol,
+  SymbolKind,
+  WorkspaceEdit,
+  TextEdit
+} from 'vscode-languageserver/node'
 import { provideCodeActions } from './lsp/code-action'
 import { provideCompletions } from './lsp/completion'
 import { validateDocument } from './lsp/diagnostics'
@@ -71,6 +82,8 @@ export class NASMLanguageServer {
   private definesCache = new Map<string, { version: number; defines: Map<string, string> }>()
   /** 每文档结构体表缓存（按版本失效） */
   private structsCache = new Map<string, { version: number; structs: Map<string, StructDef> }>()
+  /** 每文档符号表缓存（按版本失效） */
+  private symbolsCache = new Map<string, { version: number; symbols: SymbolEntry[] }>()
   /** 诊断防抖定时器（按 uri） */
   private readonly diagTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -106,6 +119,7 @@ export class NASMLanguageServer {
       this.virtualCache.delete(event.document.uri)
       this.definesCache.delete(event.document.uri)
       this.structsCache.delete(event.document.uri)
+      this.symbolsCache.delete(event.document.uri)
       this.pushCoverage(event.document)
       this.validateAndPush(event.document)
     })
@@ -114,6 +128,7 @@ export class NASMLanguageServer {
       this.virtualCache.delete(event.document.uri)
       this.definesCache.delete(event.document.uri)
       this.structsCache.delete(event.document.uri)
+      this.symbolsCache.delete(event.document.uri)
       this.validateAndPushDebounced(event.document)
     })
     this.documents.onDidClose((event) => {
@@ -121,6 +136,7 @@ export class NASMLanguageServer {
       this.virtualCache.delete(event.document.uri)
       this.definesCache.delete(event.document.uri)
       this.structsCache.delete(event.document.uri)
+      this.symbolsCache.delete(event.document.uri)
       const timer = this.diagTimers.get(event.document.uri)
       if (timer !== undefined) {
         clearTimeout(timer)
@@ -155,6 +171,11 @@ export class NASMLanguageServer {
     this.connection.onRequest('nasm-commenter/annotateFunction', this.onAnnotateFunction.bind(this))
     this.connection.onRequest('nasm-commenter/removeComments', this.onRemoveComments.bind(this))
     this.connection.onRequest('nasm-commenter/stripAllComments', this.onStripAllComments.bind(this))
+    this.connection.onDefinition(this.onDefinition.bind(this))
+    this.connection.onReferences(this.onReferences.bind(this))
+    this.connection.onRenameRequest(this.onRename.bind(this))
+    this.connection.onDocumentSymbol(this.onDocumentSymbol.bind(this))
+    this.connection.onDocumentFormatting(this.onDocumentFormatting.bind(this))
     this.connection.listen()
   }
 
@@ -176,7 +197,12 @@ export class NASMLanguageServer {
         hoverProvider: true,
         codeActionProvider: true,
         completionProvider: { resolveProvider: false },
-        inlayHintProvider: true
+        inlayHintProvider: true,
+        definitionProvider: true,
+        referencesProvider: true,
+        renameProvider: true,
+        documentSymbolProvider: true,
+        documentFormattingProvider: true
       }
     }
   }
@@ -531,5 +557,205 @@ export class NASMLanguageServer {
       this.validateAndPush(doc)
     }, 300)
     this.diagTimers.set(doc.uri, timer)
+  }
+
+  /** 每文档符号表（按版本缓存）。 */
+  private symbolsOf(doc: TextDocument): SymbolEntry[] {
+    const cached = this.symbolsCache.get(doc.uri)
+    if (cached !== undefined && cached.version === doc.version) {
+      return cached.symbols
+    }
+    const text = doc.getText()
+    const analysis = analyzePreprocessor(text)
+    const symbols = buildSymbolTable(
+      parseDocument(text),
+      analysis.defines,
+      analysis.macros,
+      this.structsOf(doc)
+    )
+    this.symbolsCache.set(doc.uri, { version: doc.version, symbols })
+    return symbols
+  }
+
+  /** 光标处标识符 token（不在标识符上时返回 null）。 */
+  private identifierAt(
+    doc: TextDocument,
+    position: { line: number; character: number }
+  ): { value: string; start: number; end: number } | null {
+    const lineText = doc.getText().split(/\r?\n/)[position.line] ?? ''
+    for (const tok of tokenizeLine(lineText)) {
+      if (
+        tok.type === 'identifier' &&
+        position.character >= tok.start &&
+        position.character <= tok.end
+      ) {
+        return { value: tok.value, start: tok.start, end: tok.end }
+      }
+    }
+    return null
+  }
+
+  private onDefinition(params: {
+    textDocument: { uri: string }
+    position: { line: number; character: number }
+  }): Location | null {
+    const doc = this.documents.get(params.textDocument.uri)
+    if (doc === undefined) {
+      return null
+    }
+    const token = this.identifierAt(doc, params.position)
+    if (token === null) {
+      return null
+    }
+    const target = this.symbolsOf(doc).find((s) => s.name === token.value)
+    if (target === undefined) {
+      return null
+    }
+    return {
+      uri: params.textDocument.uri,
+      range: {
+        start: { line: target.line, character: target.character },
+        end: { line: target.line, character: target.character + target.length }
+      }
+    }
+  }
+
+  private onReferences(params: {
+    textDocument: { uri: string }
+    position: { line: number; character: number }
+    context: { includeDeclaration: boolean }
+  }): Location[] {
+    const doc = this.documents.get(params.textDocument.uri)
+    if (doc === undefined) {
+      return []
+    }
+    const token = this.identifierAt(doc, params.position)
+    if (token === null) {
+      return []
+    }
+    const symbols = this.symbolsOf(doc)
+    const declaration = symbols.find((s) => s.name === token.value)
+    const locations: Location[] = []
+    if (params.context.includeDeclaration && declaration !== undefined) {
+      locations.push({
+        uri: params.textDocument.uri,
+        range: {
+          start: { line: declaration.line, character: declaration.character },
+          end: { line: declaration.line, character: declaration.character + declaration.length }
+        }
+      })
+    }
+    const lines = doc.getText().split(/\r?\n/)
+    for (let i = 0; i < lines.length; i++) {
+      for (const tok of tokenizeLine(lines[i])) {
+        if (tok.type === 'identifier' && tok.value === token.value) {
+          if (
+            declaration !== undefined &&
+            declaration.line === i &&
+            declaration.character === tok.start
+          ) {
+            continue
+          }
+          locations.push({
+            uri: params.textDocument.uri,
+            range: {
+              start: { line: i, character: tok.start },
+              end: { line: i, character: tok.end }
+            }
+          })
+        }
+      }
+    }
+    return locations
+  }
+
+  private onRename(params: {
+    textDocument: { uri: string }
+    position: { line: number; character: number }
+    newName: string
+  }): WorkspaceEdit {
+    const result: WorkspaceEdit = { changes: {} }
+    if (!/^[A-Za-z_.$?@][\w.$?@]*$/.test(params.newName)) {
+      throw new Error(`非法的 NASM 标识符: ${params.newName}`)
+    }
+    const doc = this.requireDoc(params.textDocument.uri)
+    const token = this.identifierAt(doc, params.position)
+    if (token === null) {
+      return result
+    }
+    const edits: TextEdit[] = []
+    const lines = doc.getText().split(/\r?\n/)
+    for (let i = 0; i < lines.length; i++) {
+      for (const tok of tokenizeLine(lines[i])) {
+        if (tok.type === 'identifier' && tok.value === token.value) {
+          edits.push({
+            range: {
+              start: { line: i, character: tok.start },
+              end: { line: i, character: tok.end }
+            },
+            newText: params.newName
+          })
+        }
+      }
+    }
+    result.changes = { [params.textDocument.uri]: edits }
+    return result
+  }
+
+  private onDocumentSymbol(params: {
+    textDocument: { uri: string }
+  }): DocumentSymbol[] {
+    const doc = this.documents.get(params.textDocument.uri)
+    if (doc === undefined) {
+      return []
+    }
+    const kindMap: Record<string, SymbolKind> = {
+      label: SymbolKind.Variable,
+      function: SymbolKind.Function,
+      define: SymbolKind.Constant,
+      macro: SymbolKind.Function,
+      'struct-field': SymbolKind.Field
+    }
+    const lines = doc.getText().split(/\r?\n/)
+    return this.symbolsOf(doc).map((s) => {
+      const lineEnd = (lines[s.line] ?? '').length
+      const selection =
+        s.length > 0
+          ? {
+            start: { line: s.line, character: s.character },
+            end: { line: s.line, character: s.character + s.length }
+          }
+          : { start: { line: s.line, character: 0 }, end: { line: s.line, character: 0 } }
+      const symbol: DocumentSymbol = {
+        name: s.name,
+        kind: kindMap[s.kind] ?? SymbolKind.Variable,
+        range: {
+          start: { line: s.line, character: 0 },
+          end: { line: s.line, character: lineEnd }
+        },
+        selectionRange: selection
+      }
+      if (s.detail !== undefined) {
+        symbol.detail = s.detail
+      }
+      return symbol
+    })
+  }
+
+  private onDocumentFormatting(params: {
+    textDocument: { uri: string }
+    options: { tabSize?: number; insertSpaces?: boolean }
+  }): TextEdit[] {
+    if (!resolveConfig({ ...this.config }).format.enable) {
+      return []
+    }
+    const doc = this.requireDoc(params.textDocument.uri)
+    return formatDocumentEdits(doc.getText()).map((e) => ({
+      range: {
+        start: { line: e.startLine, character: e.startCharacter },
+        end: { line: e.endLine, character: e.endCharacter }
+      },
+      newText: e.newText
+    }))
   }
 }

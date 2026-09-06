@@ -11,6 +11,7 @@ export function getConfig(): CommentConfig {
   return {
     enable: cfg.get<boolean>('enable', true),
     virtual: cfg.get<boolean>('virtual', true),
+    format: { enable: cfg.get<boolean>('format.enable', false) },
     language: cfg.get<'zh' | 'en'>('language', 'zh'),
     style: cfg.get<'inline' | 'above'>('style', 'inline'),
     minColumn: cfg.get<number>('minColumn', 32),
