@@ -63,6 +63,8 @@ export interface FormatOptions {
   tabSize: number
   /** 自动注释标记前缀（默认空 = 注释形如 `; 内容`；设置如 `[nasm-commenter] ` 启用标记模式） */
   marker: string
+  /** 分号风格（';' 默认 / ';;' 块注释风格） */
+  semicolon: ';' | ';;'
   /** 详细模式：附加 detail 说明 */
   verbose: boolean
 }

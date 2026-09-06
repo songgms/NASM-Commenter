@@ -15,6 +15,10 @@ export function defaultCommentConfig(): CommentConfig {
     protectExistingComments: true,
     format: { enable: false },
     virtual: true,
+    virtualScope: 'all',
+    semicolonStyle: ';',
+    functionTemplate:
+      '函数名: {name}\n功能: {purpose}\n参数: {args}\n返回: {return}\n破坏的寄存器: {clobbered}',
     marker: '',
     abi: 'auto',
     llm: {

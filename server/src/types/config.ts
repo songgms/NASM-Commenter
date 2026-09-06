@@ -40,6 +40,12 @@ export interface CommentConfig {
   format: { enable: boolean }
   /** 虚拟注释预览（Inlay Hint 幽灵文字，不修改文档；默认 true） */
   virtual: boolean
+  /** 虚拟注释作用范围：all=全部段，textOnly=仅 .text 代码段 */
+  virtualScope: 'all' | 'textOnly'
+  /** 注释分号风格：';' 或 ';;'（块注释风格） */
+  semicolonStyle: ';' | ';;'
+  /** 函数块注释模板，占位符 {name} {purpose} {args} {return} {clobbered}，多行用 \n */
+  functionTemplate: string
   /**
    * 自动注释标记前缀（默认空 = 不带标记）。
    * 设置如 `[nasm-commenter] ` 可恢复精确的标记式移除。

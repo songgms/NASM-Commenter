@@ -64,6 +64,7 @@ import { provideCompletions } from './lsp/completion'
 import { validateDocument } from './lsp/diagnostics'
 import { provideVirtualComments } from './lsp/inlay-hints'
 import type { DiagnosticData } from './lsp/diagnostics'
+import { DocumentContext } from './context/document-context'
 import type { VirtualComment } from './lsp/inlay-hints'
 import type { StructDef } from './types'
 import { findCommentStart } from './utils/indent'
@@ -76,8 +77,8 @@ export class NASMLanguageServer {
   private llm: LLMAdapter | undefined
   /** 每文档 ABI 检测缓存（按版本失效） */
   private abiCache = new Map<string, { version: number; abi: ReturnType<typeof detectABI> }>()
-  /** 每文档虚拟注释缓存（按版本失效） */
-  private virtualCache = new Map<string, { version: number; hints: VirtualComment[] }>()
+  /** 每文档虚拟注释缓存（按版本失效，sections 供 textOnly 过滤） */
+  private virtualCache = new Map<string, { version: number; hints: VirtualComment[]; sections: string[] }>()
   /** 每文档 %define 常量缓存（按版本失效） */
   private definesCache = new Map<string, { version: number; defines: Map<string, string> }>()
   /** 每文档结构体表缓存（按版本失效） */
@@ -171,6 +172,7 @@ export class NASMLanguageServer {
     this.connection.onRequest('nasm-commenter/annotateFunction', this.onAnnotateFunction.bind(this))
     this.connection.onRequest('nasm-commenter/removeComments', this.onRemoveComments.bind(this))
     this.connection.onRequest('nasm-commenter/stripAllComments', this.onStripAllComments.bind(this))
+    this.connection.onRequest('nasm-commenter/firstUnannotated', this.onFirstUnannotated.bind(this))
     this.connection.onDefinition(this.onDefinition.bind(this))
     this.connection.onReferences(this.onReferences.bind(this))
     this.connection.onRenameRequest(this.onRename.bind(this))
@@ -398,11 +400,26 @@ export class NASMLanguageServer {
     if (cached === undefined || cached.version !== doc.version) {
       const config = resolveConfig({ ...this.config, protectExistingComments: false })
       const ann = annotateSource(doc.getText(), this.stores, config)
-      cached = { version: doc.version, hints: provideVirtualComments(ann.lines, ann.comments, this.stores) }
+      const context = new DocumentContext(ann.lines, ann.abi, this.stores.syscalls)
+      cached = {
+        version: doc.version,
+        hints: provideVirtualComments(ann.lines, ann.comments, this.stores),
+        sections: ann.lines.map((l) => context.getSectionAt(l.lineNumber))
+      }
       this.virtualCache.set(doc.uri, cached)
     }
+    const textOnly = this.config.virtualScope === 'textOnly'
     return cached.hints
-      .filter((v) => v.line >= params.range.start.line && v.line <= params.range.end.line)
+      .filter((v) => {
+        if (v.line < params.range.start.line || v.line > params.range.end.line) {
+          return false
+        }
+        if (textOnly) {
+          const section = cached.sections[v.line] ?? '.text'
+          return section === '.text' || section === '.rodata'
+        }
+        return true
+      })
       .map((v): InlayHint => ({
         position: { line: v.line, character: v.character },
         label: v.label,
@@ -529,12 +546,13 @@ export class NASMLanguageServer {
     }
   }
 
-  /** 校验文档并推送诊断（未知指令 / 未定义跳转目标）。 */
+  /** 校验文档并推送诊断（未知指令 / 未定义跳转目标 / 未引用标签 / 预处理问题 / 条件不确定）。 */
   private validateAndPush(doc: TextDocument): void {
     if (this.stores === null) {
       return
     }
-    const diagnostics = validateDocument(doc.getText(), this.stores).map((d: DiagnosticData) => ({
+    const text = doc.getText()
+    const diagnostics = validateDocument(text, this.stores).map((d: DiagnosticData) => ({
       severity: d.severity,
       range: {
         start: { line: d.line, character: d.character },
@@ -543,7 +561,49 @@ export class NASMLanguageServer {
       message: d.message,
       source: 'nasm-commenter'
     }))
+    // 预处理层诊断：嵌套不平衡 (Warning) 与条件汇编不确定 (Hint)
+    const analysis = analyzePreprocessor(text)
+    for (const issue of analysis.issues) {
+      diagnostics.push({
+        severity: issue.severity,
+        range: {
+          start: { line: issue.line, character: 0 },
+          end: { line: issue.line, character: 0 }
+        },
+        message: issue.message,
+        source: 'nasm-commenter'
+      })
+    }
+    for (const ln of analysis.conditionalLines) {
+      diagnostics.push({
+        severity: 4,
+        range: {
+          start: { line: ln, character: 0 },
+          end: { line: ln, character: 0 }
+        },
+        message: '条件汇编分支不确定, 注释仅供参考',
+        source: 'nasm-commenter'
+      })
+    }
     void this.connection.sendDiagnostics({ uri: doc.uri, diagnostics })
+  }
+
+  /** 第一个未注释的指令行（状态栏跳转用；无则返回 null）。 */
+  private onFirstUnannotated(params: { textDocument: { uri: string } }): { line: number } | null {
+    const doc = this.requireDoc(params.textDocument.uri)
+    const config = resolveConfig({ ...this.config, protectExistingComments: false })
+    const ann = annotateSource(doc.getText(), this.requireStores(), config)
+    for (const line of ann.lines) {
+      if (line.kind !== 'instruction') {
+        continue
+      }
+      const result = ann.comments.get(line.lineNumber)
+      const covered = result !== undefined && (result.skipped === true || result.comment.length > 0)
+      if (!covered) {
+        return { line: line.lineNumber }
+      }
+    }
+    return null
   }
 
   /** 编辑触发的诊断推送带 300ms 防抖，避免每次按键全量校验。 */

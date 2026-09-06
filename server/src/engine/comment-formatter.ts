@@ -36,10 +36,10 @@ function composeText(result: CommentResult, options: FormatOptions): string {
 
 /**
  * 格式化单行注释。
- * - inline（无已有注释）：在代码末尾插入 `padding; 内容`
+ * - inline（无已有注释）：在代码末尾插入 `padding;; 或 ; 内容`
  * - inline（已有用户注释且不保护）：替换整段注释为 `; 用户注释 / 新注释`
- * - above：在行首插入整行 `{indent}; 内容\n`
- * marker 非空时内容前附带标记。
+ * - above：在行首插入整行 `{indent};; 或 ; 内容\n`
+ * marker 非空时内容前附带标记；分号风格由 semicolon 决定（';' 或 ';;'）。
  */
 export function formatComment(
   line: ParsedLine,
@@ -49,11 +49,12 @@ export function formatComment(
 ): FormattedComment {
   const body = composeText(result, options)
   const marked = `${options.marker}${body}`
+  const semi = options.semicolon === ';;' ? ';;' : ';'
 
   if (options.style === 'above') {
     const indent = line.indent ?? ''
     return {
-      text: `${indent}; ${marked}\n`,
+      text: `${indent}${semi} ${marked}\n`,
       insertLine: line.lineNumber,
       insertColumn: 0,
       isNewline: true
@@ -63,11 +64,11 @@ export function formatComment(
   const code = stripExistingComment(line.raw).trimEnd()
   const codeLen = code.length
 
-  // 已有用户注释（保护关闭时才会走到这里）：替换从注释开始到行尾，新注释以 ` / ` 追加
+  // 已有用户注释（保护开启时追加；此处由引擎判定后进入）：替换从注释开始到行尾
   if (line.comment !== undefined && line.comment.length > 0) {
     const commentStart = findCommentStart(line.raw)
     return {
-      text: `; ${line.comment.trim()} / ${marked}`,
+      text: `${semi} ${line.comment.trim()} / ${marked}`,
       insertLine: line.lineNumber,
       insertColumn: commentStart >= 0 ? commentStart : codeLen,
       isNewline: false,
@@ -78,7 +79,7 @@ export function formatComment(
   const target = alignColumnValue ?? options.minColumn
   const padding = ' '.repeat(Math.max(2, target - codeLen))
   return {
-    text: `${padding}; ${marked}`,
+    text: `${padding}${semi} ${marked}`,
     insertLine: line.lineNumber,
     insertColumn: codeLen,
     isNewline: false

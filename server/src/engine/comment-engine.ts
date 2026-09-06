@@ -47,6 +47,7 @@ export function formatOptionsOf(config: CommentConfig): FormatOptions {
     minColumn: config.minColumn,
     tabSize: 4,
     marker: config.marker,
+    semicolon: config.semicolonStyle,
     verbose: config.verbose
   }
 }
@@ -123,14 +124,20 @@ export class CommentEngine {
     }
   }
 
-  /** 后置过滤：去重 → 保护已有注释（跳过时保留 comment 供移除流程匹配）。 */  private finalize(line: ParsedLine, result: CommentResult | null, config: CommentConfig): CommentResult | null {
+  /**
+   * 后置过滤：去重 → 保护语义（0.7.0 起）。
+   * - 内容与已写入注释一致（或已追加）→ 跳过（幂等）
+   * - protect=true：手写注释行仍生成，格式化为 `手写 / 自动` 追加（不破坏手写内容）
+   * - protect=false：已有注释的行整体跳过
+   */
+  private finalize(line: ParsedLine, result: CommentResult | null, config: CommentConfig): CommentResult | null {
     if (result === null || result.skipped === true) {
       return result
     }
     if (shouldSkip(line.raw, result.comment, config.marker)) {
       return { ...result, skipped: true, skipReason: '注释未变化' }
     }
-    if (config.protectExistingComments && hasExistingComment(line.raw)) {
+    if (!config.protectExistingComments && hasExistingComment(line.raw)) {
       return { comment: '', confidence: 0, source: 'rule', skipped: true, skipReason: '已有注释' }
     }
     return result
@@ -447,13 +454,19 @@ export function buildFunctionComment(
   }
 
   const args = fn.parameterRegisters.length > 0 ? fn.parameterRegisters.join(', ') : '无'
-  const blockCommentLines = [
-    `函数名: ${fn.name}`,
-    `功能: ${purpose}`,
-    `参数: ${args}`,
-    `返回: ${returnValue}`,
-    `破坏的寄存器: ${clobbered.length > 0 ? clobbered.join(', ') : '无'}`
-  ]
+  const clobberedText = clobbered.length > 0 ? clobbered.join(', ') : '无'
+  // 模板渲染：占位符 {name} {purpose} {args} {return} {clobbered}，多行用 \n 分隔
+  const template = config.functionTemplate.trim().length > 0
+    ? config.functionTemplate
+    : '函数名: {name}\n功能: {purpose}\n参数: {args}\n返回: {return}\n破坏的寄存器: {clobbered}'
+  const blockCommentLines = template.split('\\n').join('\n').split('\n').map((l) =>
+    l
+      .replace('{name}', fn.name)
+      .replace('{purpose}', purpose)
+      .replace('{args}', args)
+      .replace('{return}', returnValue)
+      .replace('{clobbered}', clobberedText)
+  )
   const indent = startLine.indent ?? ''
   const text = blockCommentLines.map((l) => `${indent}; ${l}`).join('\n') + '\n'
   return {

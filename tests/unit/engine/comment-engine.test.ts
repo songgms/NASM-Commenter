@@ -30,19 +30,19 @@ describe('comment-engine', () => {
     expect(result?.comment).toContain('vpermilpd')
   })
 
-  it('已有注释保护（默认开启）→ skipped', () => {
+  it('保护开启（默认）：手写注释行仍生成，追加格式由 formatter 处理', () => {
     const engine = new CommentEngine(stores)
     const result = engine.annotateLine(parseDocument('mov rax, 1 ; 我的注释', 0)[0], undefined, config)
-    expect(result?.skipped).toBe(true)
-    expect(result?.skipReason).toBe('已有注释')
+    expect(result?.skipped).toBeUndefined()
+    expect(result?.comment).toBe('将立即数 1 加载到 rax')
   })
 
-  it('关闭保护时已有用户注释仍生成（追加格式）', () => {
+  it('保护关闭：已有注释的行整体跳过', () => {
     const engine = new CommentEngine(stores)
     const cfg = testConfig({ protectExistingComments: false })
     const result = engine.annotateLine(parseDocument('mov rax, 1 ; 我的注释', 0)[0], undefined, cfg)
-    expect(result?.skipped).toBeUndefined()
-    expect(result?.comment).toBe('将立即数 1 加载到 rax')
+    expect(result?.skipped).toBe(true)
+    expect(result?.skipReason).toBe('已有注释')
   })
 
   it('已有相同自动注释时跳过（幂等）', () => {

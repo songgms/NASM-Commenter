@@ -11,6 +11,8 @@ import { removeComments } from './remove-comments'
 import { stripAllComments } from './strip-all-comments'
 import { toggleInline } from './toggle-inline'
 import { toggleVirtual } from './toggle-virtual'
+import { gotoFirstUnannotated } from './goto-first-unannotated'
+import { annotateBlockHeader } from './annotate-block-header'
 
 export function registerCommands(context: vscode.ExtensionContext, client: LanguageClient): void {
   context.subscriptions.push(
@@ -20,6 +22,8 @@ export function registerCommands(context: vscode.ExtensionContext, client: Langu
     vscode.commands.registerTextEditorCommand('nasm-commenter.annotateFunction', () => annotateFunction(client)),
     vscode.commands.registerTextEditorCommand('nasm-commenter.removeComments', () => removeComments(client)),
     vscode.commands.registerTextEditorCommand('nasm-commenter.stripAllComments', () => stripAllComments(client)),
+    vscode.commands.registerTextEditorCommand('nasm-commenter.gotoFirstUnannotated', () => gotoFirstUnannotated(client)),
+    vscode.commands.registerTextEditorCommand('nasm-commenter.annotateBlockHeader', () => annotateBlockHeader()),
     vscode.commands.registerCommand('nasm-commenter.toggleInline', () => toggleInline()),
     vscode.commands.registerCommand('nasm-commenter.toggleVirtual', () => toggleVirtual())
   )

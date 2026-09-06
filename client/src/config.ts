@@ -11,6 +11,12 @@ export function getConfig(): CommentConfig {
   return {
     enable: cfg.get<boolean>('enable', true),
     virtual: cfg.get<boolean>('virtual', true),
+    virtualScope: cfg.get<'all' | 'textOnly'>('virtual.scope', 'all'),
+    semicolonStyle: cfg.get<';' | ';;'>('semicolonStyle', ';'),
+    functionTemplate: cfg.get<string>(
+      'annotate.functionTemplate',
+      '函数名: {name}\n功能: {purpose}\n参数: {args}\n返回: {return}\n破坏的寄存器: {clobbered}'
+    ),
     format: { enable: cfg.get<boolean>('format.enable', false) },
     language: cfg.get<'zh' | 'en'>('language', 'zh'),
     style: cfg.get<'inline' | 'above'>('style', 'inline'),

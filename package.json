@@ -84,6 +84,16 @@
         "command": "nasm-commenter.toggleVirtual",
         "title": "切换虚拟注释预览",
         "category": "NASM Commenter"
+      },
+      {
+        "command": "nasm-commenter.gotoFirstUnannotated",
+        "title": "跳转到第一个未注释行",
+        "category": "NASM Commenter"
+      },
+      {
+        "command": "nasm-commenter.annotateBlockHeader",
+        "title": "为选中区域生成块头注释",
+        "category": "NASM Commenter"
       }
     ],
     "keybindings": [
@@ -95,6 +105,11 @@
       {
         "command": "nasm-commenter.annotateSelection",
         "key": "ctrl+shift+;",
+        "when": "editorTextFocus && editorLangId == nasm"
+      },
+      {
+        "command": "nasm-commenter.gotoFirstUnannotated",
+        "key": "ctrl+alt+u",
         "when": "editorTextFocus && editorLangId == nasm"
       }
     ],
@@ -198,6 +213,29 @@
           "type": "boolean",
           "default": false,
           "description": "基础格式化：标签/助记符/操作数对齐（Shift+Alt+F 触发）"
+        },
+        "nasm-commenter.virtual.scope": {
+          "type": "string",
+          "enum": [
+            "all",
+            "textOnly"
+          ],
+          "default": "all",
+          "description": "虚拟注释作用范围：全部段或仅 .text 代码段"
+        },
+        "nasm-commenter.semicolonStyle": {
+          "type": "string",
+          "enum": [
+            ";",
+            ";;"
+          ],
+          "default": ";",
+          "description": "注释分号风格"
+        },
+        "nasm-commenter.annotate.functionTemplate": {
+          "type": "string",
+          "default": "函数名: {name}\n功能: {purpose}\n参数: {args}\n返回: {return}\n破坏的寄存器: {clobbered}",
+          "description": "函数块注释模板，占位符 {name} {purpose} {args} {return} {clobbered}"
         }
       }
     }
