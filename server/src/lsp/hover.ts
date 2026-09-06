@@ -87,11 +87,30 @@ function syscallNumberHover(
   return info !== undefined ? syscallHover(value, info) : null
 }
 
+/** 宏常量 hover 内容。 */
+export function defineHover(name: string, value: string): string {
+  return `**宏常量 \`${name}\`** = ${value.length > 0 ? value : '(空)'}\n\n来源: %define 定义（使用处已做等值替换）`
+}
+
 /** 光标处 hover：返回 Markdown 或 null。 */
-export function hoverAt(line: string, character: number, abi: ABI, stores: KnowledgeStores): string | null {
+export function hoverAt(
+  line: string,
+  character: number,
+  abi: ABI,
+  stores: KnowledgeStores,
+  defines?: Map<string, string>
+): string | null {
   const parsed = parseLine(line, 0)
   const tokens = tokenizeLine(line)
   const tok = tokenAt(tokens, character)
+
+  // 宏常量：%define 名称 → 定义值（优先级最高，且不限于指令行）
+  if (tok !== null && tok.type === 'identifier' && defines !== undefined) {
+    const value = defines.get(tok.value)
+    if (value !== undefined) {
+      return defineHover(tok.value, value)
+    }
+  }
 
   if (parsed.kind === 'instruction' && parsed.mnemonic !== undefined) {
     const syscallHint = syscallNumberHover(parsed, tok, abi, stores)

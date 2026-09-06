@@ -2,7 +2,7 @@
  * Hover 单元测试：指令语义 / 寄存器约定 / 系统调用号（docs/07 §3.5.2）。
  */
 import { describe, it, expect } from 'vitest'
-import { hoverAt, syscallHover } from '../../../server/src/lsp/hover'
+import { hoverAt, syscallHover, defineHover } from '../../../server/src/lsp/hover'
 import { getStores } from '../../helpers'
 
 describe('hoverAt', () => {
@@ -45,6 +45,23 @@ describe('hoverAt', () => {
   it('macOS 基址编号 → 归一后显示', () => {
     const md = hoverAt('mov rax, 0x2000004', 13, 'macos-x64', stores)
     expect(md).toContain('`write`')
+  })
+
+  it('宏常量悬停显示定义值', () => {
+    const defines = new Map([['BUF', '1024']])
+    const md = hoverAt('    mov rax, BUF', 13, 'linux-x64', stores, defines)
+    expect(md).toContain('BUF')
+    expect(md).toContain('1024')
+  })
+
+  it('宏常量优先于指令 hover', () => {
+    const defines = new Map([['mov', 'xor']])
+    const md = hoverAt('mov rax, 1', 1, 'linux-x64', stores, defines)
+    expect(md).toContain('宏常量')
+  })
+
+  it('defineHover 输出格式', () => {
+    expect(defineHover('BUF', '1024')).toContain('= 1024')
   })
 
   it('syscallHover 组装参数与返回说明', () => {

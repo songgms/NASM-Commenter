@@ -17,6 +17,7 @@ export {
 export { parseLine, parseDocument } from './line-parser'
 
 export {
+  collectDefines,
   createPreprocessorState,
   preprocessLine
 } from './preprocessor'

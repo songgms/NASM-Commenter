@@ -43,13 +43,36 @@ describe('validateDocument', () => {
     expect(validateDocument(src, stores)).toEqual([])
   })
 
+  it('未引用标签 → Hint', () => {
+    const src = ['section .data', '    msg db 1', '    orphan:', '', 'section .text', '    global _start', '_start:', '    mov rsi, msg', '    syscall'].join('\n')
+    const diags = validateDocument(src, stores)
+    const unused = diags.find((d) => d.message.includes('orphan'))
+    expect(unused).toBeDefined()
+    expect(unused?.severity).toBe(4)
+    expect(unused?.line).toBe(2)
+  })
+
+  it('被引用/导出/入口标签不告警', () => {
+    const src = [
+      '    global helper',
+      'helper:',
+      '    ret',
+      '_start:',
+      '    call helper',
+      '    jmp finish',
+      'finish:'
+    ].join('\n')
+    const diags = validateDocument(src, stores)
+    expect(diags.find((d) => d.message.includes('未被引用'))).toBeUndefined()
+  })
+
   it('带前缀指令（repne scasb）不误报未知', () => {
     const src = '    repne scasb'
     expect(validateDocument(src, stores)).toEqual([])
   })
 
-  it('标签行与注释行不产生诊断', () => {
-    const src = '; 注释\n.loop:\n    nop'
+  it('注释行与已引用标签行不产生诊断', () => {
+    const src = '; 注释\n.loop:\n    jmp .loop'
     expect(validateDocument(src, stores)).toEqual([])
   })
 })

@@ -1,5 +1,5 @@
 /**
- * 诊断：未知指令（Hint）与跳转到未定义标签（Warning）。
+ * 诊断：未知指令（Hint）、跳转到未定义标签（Warning）、未引用标签（Hint）。
  * 在文档打开与编辑时由 server 推送到 Problems 面板。
  */
 import type { ParsedLine } from '../types'
@@ -46,9 +46,13 @@ function mnemonicToken(line: ParsedLine): { start: number; end: number; value: s
 export function validateDocument(text: string, stores: KnowledgeStores): DiagnosticData[] {
   const lines = parseDocument(text)
   const labels = new Set<string>()
+  const defLineByLabel = new Map<string, number>()
   for (const line of lines) {
     if (line.label !== undefined) {
       labels.add(line.label)
+      if (!defLineByLabel.has(line.label)) {
+        defLineByLabel.set(line.label, line.lineNumber)
+      }
     }
   }
 
@@ -92,5 +96,64 @@ export function validateDocument(text: string, stores: KnowledgeStores): Diagnos
       })
     }
   }
+
+  diagnostics.push(...unusedLabelDiagnostics(lines, labels, defLineByLabel))
   return diagnostics
+}
+
+/**
+ * 未引用标签 (Hint)：定义了但全文再未出现的标签。
+ * 豁免：global 导出、_start 入口。
+ * 使用 = 除定义位置（标签冒号对 / 数据定义标签行）外任意标识符出现。
+ */
+function unusedLabelDiagnostics(
+  lines: ParsedLine[],
+  labels: Set<string>,
+  defLineByLabel: Map<string, number>
+): DiagnosticData[] {
+  const globals = new Set<string>()
+  for (const line of lines) {
+    if (line.kind === 'directive' && line.directive === 'global' && line.directiveArgs?.[0]) {
+      globals.add(line.directiveArgs[0])
+    }
+  }
+
+  const used = new Set<string>()
+  for (const line of lines) {
+    const tokens = tokenizeLine(line.raw)
+    for (let i = 0; i < tokens.length; i++) {
+      const tok = tokens[i]
+      if (tok.type !== 'identifier') {
+        continue
+      }
+      const next = tokens[i + 1]
+      const isDefinition = next !== undefined && next.type === 'colon'
+      const isDataLabel = line.label === tok.value && (line.kind === 'directive' || line.kind === 'label')
+      if (!isDefinition && !isDataLabel) {
+        used.add(tok.value)
+      }
+    }
+  }
+
+  const result: DiagnosticData[] = []
+  for (const label of labels) {
+    if (used.has(label) || globals.has(label) || label === '_start') {
+      continue
+    }
+    const defLine = defLineByLabel.get(label)
+    if (defLine === undefined) {
+      continue
+    }
+    const labelTok = tokenizeLine(lines[defLine]?.raw ?? '').find(
+      (x) => x.type === 'identifier' && x.value === label
+    )
+    result.push({
+      line: defLine,
+      character: labelTok?.start ?? 0,
+      length: labelTok !== undefined ? labelTok.end - labelTok.start : label.length,
+      message: `标签 "${label}" 未被引用`,
+      severity: 4
+    })
+  }
+  return result
 }

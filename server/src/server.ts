@@ -39,10 +39,10 @@ import type { KnowledgeStores } from './knowledge'
 import { loadKnowledge, buildStores } from './knowledge'
 import { resolveConfig } from './utils/config-defaults'
 import { logger } from './utils/logger'
-import { parseDocument } from './lexer'
+import { collectDefines, parseDocument } from './lexer'
 import { detectABI } from './utils/abi-detector'
-import { annotateSource, annotateSourceEnhanced, buildEdits, buildFunctionComment } from './engine/comment-engine'
-import { applyEditsToText, buildRemoveEdits } from './engine/deduplicator'
+import { annotateSource, annotateSourceEnhanced, buildEdits, buildFunctionComment, countCoveredLines } from './engine/comment-engine'
+import { buildRemoveEdits } from './engine/deduplicator'
 import { stripAllCommentsEdits } from './engine/strip-comments'
 import { createLLMAdapter } from './llm'
 import type { LLMAdapter } from './llm'
@@ -65,6 +65,8 @@ export class NASMLanguageServer {
   private abiCache = new Map<string, { version: number; abi: ReturnType<typeof detectABI> }>()
   /** 每文档虚拟注释缓存（按版本失效） */
   private virtualCache = new Map<string, { version: number; hints: VirtualComment[] }>()
+  /** 每文档 %define 常量缓存（按版本失效） */
+  private definesCache = new Map<string, { version: number; defines: Map<string, string> }>()
   /** 诊断防抖定时器（按 uri） */
   private readonly diagTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -98,17 +100,20 @@ export class NASMLanguageServer {
     this.documents.onDidOpen((event) => {
       this.abiCache.delete(event.document.uri)
       this.virtualCache.delete(event.document.uri)
+      this.definesCache.delete(event.document.uri)
       this.pushCoverage(event.document)
       this.validateAndPush(event.document)
     })
     this.documents.onDidChangeContent((event) => {
       this.abiCache.delete(event.document.uri)
       this.virtualCache.delete(event.document.uri)
+      this.definesCache.delete(event.document.uri)
       this.validateAndPushDebounced(event.document)
     })
     this.documents.onDidClose((event) => {
       this.abiCache.delete(event.document.uri)
       this.virtualCache.delete(event.document.uri)
+      this.definesCache.delete(event.document.uri)
       const timer = this.diagTimers.get(event.document.uri)
       if (timer !== undefined) {
         clearTimeout(timer)
@@ -207,13 +212,24 @@ export class NASMLanguageServer {
     const lines = doc.getText().split(/\r?\n/)
     const lineText = lines[params.position.line] ?? ''
     const abi = this.abiOf(doc)
-    const markdown = hoverAt(lineText, params.position.character, abi, stores)
+    const markdown = hoverAt(lineText, params.position.character, abi, stores, this.definesOf(doc))
     if (markdown === null) {
       return null
     }
     return {
       contents: { kind: MarkupKind.Markdown, value: markdown }
     }
+  }
+
+  /** 每文档 %define 常量表（按版本缓存）。 */
+  private definesOf(doc: TextDocument): Map<string, string> {
+    const cached = this.definesCache.get(doc.uri)
+    if (cached !== undefined && cached.version === doc.version) {
+      return cached.defines
+    }
+    const defines = collectDefines(doc.getText())
+    this.definesCache.set(doc.uri, { version: doc.version, defines })
+    return defines
   }
 
   private onCodeAction(params: {
@@ -268,17 +284,17 @@ export class NASMLanguageServer {
     return provideCompletions(lineText, params.position.character, stores, labelNames)
   }
 
-  private async annotate(text: string, config: CommentConfig, range?: { startLine: number; endLine: number }): Promise<{ edits: AnnotateFileResponse['edits']; abi: ReturnType<typeof detectABI>; stats: AnnotateFileResponse['stats'] }> {
+  private async annotate(text: string, config: CommentConfig, range?: { startLine: number; endLine: number }): Promise<{ edits: AnnotateFileResponse['edits']; abi: ReturnType<typeof detectABI>; stats: AnnotateFileResponse['stats']; covered: number }> {
     const ann = await annotateSourceEnhanced(text, this.requireStores(), config, this.llm, range)
     const edits = buildEdits(ann.lines, ann.comments, config)
-    return { edits, abi: ann.abi, stats: ann.stats }
+    return { edits, abi: ann.abi, stats: ann.stats, covered: countCoveredLines(ann.comments) }
   }
 
   private async onAnnotateFile(params: AnnotateFileRequest): Promise<AnnotateFileResponse> {
     const doc = this.requireDoc(params.textDocument.uri)
     const config = resolveConfig({ ...this.config, ...params.config })
     const result = await this.annotate(doc.getText(), config)
-    this.pushCoverage(doc, applyEditsToText(doc.getText(), result.edits))
+    this.pushCoverageCount(doc, result.covered)
     return result
   }
 
@@ -289,7 +305,7 @@ export class NASMLanguageServer {
       startLine: params.startLine,
       endLine: params.endLine
     })
-    this.pushCoverage(doc, applyEditsToText(doc.getText(), result.edits))
+    this.pushCoverageCount(doc, result.covered)
     return result
   }
 
@@ -441,31 +457,29 @@ export class NASMLanguageServer {
   }
 
   /** 推送注释覆盖率（状态栏展示：规则引擎可注释/已注释行 / 总行数）。 */
-  private pushCoverage(doc: TextDocument, text?: string): void {
-    const content = text ?? doc.getText()
-    let covered = 0
-    try {
-      const config = resolveConfig({ ...this.config, protectExistingComments: false })
-      const ann = annotateSource(content, this.requireStores(), config)
-      for (const result of ann.comments.values()) {
-        if (result.skipped !== true || result.skipReason === '注释未变化') {
-          covered++
-        }
-      }
-    } catch (e) {
-      logger.warn(`覆盖率统计失败: ${String(e)}`)
-    }
+  private pushCoverageCount(doc: TextDocument, covered: number): void {
     const notification: StatsNotificationParams = {
       uri: doc.uri,
       abi: this.abiOf(doc),
       stats: {
-        totalLines: content.split(/\r?\n/).length,
+        totalLines: doc.lineCount,
         commentedLines: covered,
         skippedLines: 0,
         bySource: { rule: 0, pattern: 0, context: 0, llm: 0, fallback: 0 }
       }
     }
     void this.connection.sendNotification('nasm-commenter/stats', notification)
+  }
+
+  /** 打开文档时的覆盖率统计（独立全量计算一次）。 */
+  private pushCoverage(doc: TextDocument): void {
+    try {
+      const config = resolveConfig({ ...this.config, protectExistingComments: false })
+      const ann = annotateSource(doc.getText(), this.requireStores(), config)
+      this.pushCoverageCount(doc, countCoveredLines(ann.comments))
+    } catch (e) {
+      logger.warn(`覆盖率统计失败: ${String(e)}`)
+    }
   }
 
   /** 校验文档并推送诊断（未知指令 / 未定义跳转目标）。 */

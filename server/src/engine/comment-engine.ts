@@ -179,6 +179,17 @@ export class CommentEngine {
   }
 }
 
+/** 覆盖行数：非跳过结果 + 「注释未变化」（已在文件中的匹配注释）。 */
+export function countCoveredLines(comments: Map<number, CommentResult>): number {
+  let covered = 0
+  for (const result of comments.values()) {
+    if (result.skipped !== true || result.skipReason === '注释未变化') {
+      covered++
+    }
+  }
+  return covered
+}
+
 /**
  * 将注释结果转为编辑列表（含范围对齐）。
  */

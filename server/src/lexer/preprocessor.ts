@@ -74,3 +74,14 @@ export function preprocessLine(line: string, state: PreprocessorState): string {
     return value !== undefined && value.length > 0 ? value : word
   })
 }
+
+/**
+ * 收集整个文档的 %define 常量（Hover 展示用）。
+ */
+export function collectDefines(text: string): Map<string, string> {
+  const state = createPreprocessorState()
+  for (const line of text.split(/\r?\n/)) {
+    preprocessLine(line, state)
+  }
+  return state.defines
+}

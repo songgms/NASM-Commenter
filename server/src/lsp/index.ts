@@ -1,7 +1,7 @@
 /**
  * LSP 处理器统一出口。
  */
-export { hoverAt, instructionHover, registerHover, syscallHover } from './hover'
+export { hoverAt, instructionHover, registerHover, syscallHover, defineHover } from './hover'
 export { provideCodeActions } from './code-action'
 export type { CodeActionData } from './code-action'
 export { provideCompletions } from './completion'
