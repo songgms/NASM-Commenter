@@ -30,7 +30,7 @@ const CATEGORIES = new Set([
 const SIGNATURE_KEY_RE = /^$|^[a-z*]+(,[a-z*]+)*$/
 /** 模板变量引用：{var} / {ctx:xxx:yyy} / {if:...}{else}{endif}。 */
 const TEMPLATE_TOKEN_RE = /\{[^}]*\}/g
-const SIMPLE_VAR_RE = /^\{(dst|src|imm|mem|label|reg|syscall|count|size)\}$/
+const SIMPLE_VAR_RE = /^\{(dst|src|src2|imm|mem|label|reg|syscall|count|size)\}$/
 const CTX_VAR_RE = /^\{ctx:[a-z]+:[\w$]+\}$/
 const CONDITIONAL_RE = /^\{(if|else|endif)[^}]*\}$/
 

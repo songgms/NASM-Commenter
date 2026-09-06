@@ -17,10 +17,15 @@ export {
 export { parseLine, parseDocument } from './line-parser'
 
 export {
+  analyzePreprocessor,
   collectDefines,
   createPreprocessorState,
-  preprocessLine
+  expandMacroLine,
+  parsePreprocessorLine,
+  preprocessLine,
+  resolveIncludeSymbols
 } from './preprocessor'
+export type { MacroDef, PreprocessIssue, PreprocessorState } from './preprocessor'
 
 export {
   REGISTERS,

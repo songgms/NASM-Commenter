@@ -161,46 +161,91 @@ export function applyLine(line: ParsedLine, state: RegisterStateMap): RegisterSt
 }
 
 /**
- * 全文线性扫描，输出每行执行前的寄存器状态快照。
- * 块入口（标签行或被跳转目标）处状态重置为 unknown。
+ * 全文寄存器状态追踪（两遍扫描，轻量化控制流合并）：
+ * - Pass A：纯线性传播，记录每条跳转指令执行后的状态快照与各标签处的
+ *   顺流（fall-through）状态
+ * - Pass B：输出快照；跳转目标处合并所有来源状态（同值常量保留，否则
+ *   unknown），单一来源直接采用来源状态，无来源（纯顺流标签）保持线性状态
  */
 export function trackRegisters(lines: ParsedLine[]): Map<number, RegisterStateMap> {
-  // 先收集全部跳转目标行号
-  const targets = new Set<number>()
   const labelLines = new Map<string, number>()
   for (const line of lines) {
     if (line.kind === 'label' && line.label !== undefined) {
       labelLines.set(line.label, line.lineNumber)
     }
-    if (
-      (line.kind === 'instruction' || line.kind === 'label') &&
-      line.label !== undefined
-    ) {
-      targets.add(line.lineNumber)
-    }
   }
+
+  // Pass A：线性传播（不在跳转目标处重置）
+  let linear: RegisterStateMap = {}
+  const afterJump = new Map<number, RegisterStateMap>()
+  const atLabel = new Map<number, RegisterStateMap>()
+  const jumpsByTarget = new Map<number, number[]>()
+
   for (const line of lines) {
+    if (line.kind === 'label' || line.label !== undefined) {
+      atLabel.set(line.lineNumber, linear)
+    }
     if (line.kind !== 'instruction' || line.mnemonic === undefined) {
       continue
     }
-    const isJump = BLOCK_EXIT_MNEMONICS.has(line.mnemonic) || isConditionalExit(line) || line.mnemonic === 'call'
-    if (!isJump) {
-      continue
-    }
-    const target = line.operands.find((o) => o.type === 'label')?.label
-    if (target !== undefined) {
-      const defLine = labelLines.get(target)
-      if (defLine !== undefined) {
-        targets.add(defLine)
+    const isBranch =
+      BLOCK_EXIT_MNEMONICS.has(line.mnemonic) || isConditionalExit(line) || line.mnemonic === 'call'
+    const targetLabel = line.operands.find((o) => o.type === 'label')?.label
+    const defLine = targetLabel !== undefined && isBranch ? labelLines.get(targetLabel) : undefined
+    linear = applyLine(line, linear)
+    if (isBranch && defLine !== undefined) {
+      if (!jumpsByTarget.has(defLine)) {
+        jumpsByTarget.set(defLine, [])
       }
+      jumpsByTarget.get(defLine)!.push(line.lineNumber)
+      afterJump.set(line.lineNumber, linear)
     }
   }
 
+  // 多来源状态合并：同种类同值保留，否则 unknown
+  function mergeStates(sources: RegisterStateMap[]): RegisterStateMap {
+    if (sources.length === 1) {
+      return { ...sources[0] }
+    }
+    const keys = new Set<string>()
+    for (const s of sources) {
+      for (const k of Object.keys(s)) {
+        keys.add(k)
+      }
+    }
+    const merged: RegisterStateMap = {}
+    for (const k of keys) {
+      const first = sources[0][k]
+      const same =
+        first !== undefined &&
+        sources.every((s) => {
+          const cur = s[k]
+          return cur !== undefined && cur.kind === first.kind && cur.value === first.value && cur.isConstant === first.isConstant
+        })
+      if (same) {
+        merged[k] = first
+      }
+    }
+    return merged
+  }
+
+  // Pass B：输出快照，汇合点合并
   let state: RegisterStateMap = {}
   const snapshots = new Map<number, RegisterStateMap>()
   for (const line of lines) {
-    if (targets.has(line.lineNumber)) {
-      state = {}
+    const jumpSources = jumpsByTarget.get(line.lineNumber)
+    if (jumpSources !== undefined) {
+      const sources: RegisterStateMap[] = []
+      if (atLabel.has(line.lineNumber)) {
+        sources.push(atLabel.get(line.lineNumber)!)
+      }
+      for (const j of jumpSources) {
+        const s = afterJump.get(j)
+        if (s !== undefined) {
+          sources.push(s)
+        }
+      }
+      state = sources.length > 0 ? mergeStates(sources) : {}
     }
     if (line.kind === 'instruction') {
       snapshots.set(line.lineNumber, state)

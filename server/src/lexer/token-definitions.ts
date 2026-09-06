@@ -118,7 +118,7 @@ export const INSTRUCTION_PREFIXES: ReadonlySet<string> = new Set(['lock', 'rep',
 
 /** NASM 伪指令集合（小写；% 开头的预处理指令单独识别）。 */
 export const PSEUDO_INSTRUCTIONS: ReadonlySet<string> = new Set([
-  'section', 'segment', 'global', 'extern', 'equ', 'times', 'align', 'bits',
+  'section', 'segment', 'global', 'extern', 'equ', 'times', 'align', 'bits', 'struc', 'endstruc', 'at',
   'default', 'cpu', 'absolute', 'incbin',
   'db', 'dw', 'dd', 'dq', 'dt', 'do', 'dy', 'dz',
   'resb', 'resw', 'resd', 'resq', 'rest', 'reso', 'resy', 'resz'

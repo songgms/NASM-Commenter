@@ -77,7 +77,7 @@ export interface SyscallInfo {
 export type SyscallTable = Record<string, SyscallInfo>
 
 /** ABI 种类。 */
-export type ABI = 'linux-x64' | 'linux-x86' | 'macos-x64'
+export type ABI = 'linux-x64' | 'linux-x86' | 'macos-x64' | 'freebsd-x64' | 'macos-x86'
 
 /** 调用约定。 */
 export interface CallingConvention {

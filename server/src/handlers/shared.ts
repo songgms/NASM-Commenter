@@ -30,6 +30,7 @@ export function buildVars(line: ParsedLine, extra?: Partial<TemplateVariables>):
   const vars: TemplateVariables = {
     dst: ops[0]?.raw,
     src: ops[1]?.raw,
+    src2: ops[2]?.raw,
     imm: immOp?.raw,
     mem: memOp?.raw ?? ops.find((o) => o.raw.includes('['))?.raw,
     label: ops.find((o) => o.type === 'label')?.label

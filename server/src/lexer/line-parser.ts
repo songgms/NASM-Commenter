@@ -12,7 +12,7 @@ import { findCommentStart } from '../utils/indent'
 import { tokenizeLine } from './tokenizer'
 import { parseOperandTokens, rawFromTokens, splitOperandTokens } from './operand-parser'
 import { DATA_DEFINES, INSTRUCTION_PREFIXES, isPseudoInstruction } from './token-definitions'
-import { createPreprocessorState, preprocessLine } from './preprocessor'
+import { analyzePreprocessor, expandMacroLine, preprocessLine } from './preprocessor'
 
 /** 提取标签（identifier 后跟 colon），返回标签名与剩余 token 起点。 */
 function extractLabel(tokens: Token[]): { label?: string; restFrom: number } {
@@ -161,13 +161,18 @@ export function parseLine(line: string, lineNumber: number): ParsedLine {
 
 /**
  * 解析整个文档（多行文本）。
- * 先做简化预处理（%define 常量替换）用于语义分析，
- * 但 ParsedLine.raw 保留原始行文本，保证编辑位置计算正确。
+ * 先做预处理分析（%define 常量、单行宏展开），用于语义分析；
+ * ParsedLine.raw 保留原始行文本，保证编辑位置计算正确。
+ * 宏定义采用两遍收集（后定义的常量对前面的行同样生效，与 NASM 多遍汇编一致）。
  */
 export function parseDocument(text: string): ParsedLine[] {
-  const state = createPreprocessorState()
+  const state = analyzePreprocessor(text)
   return text.split(/\r?\n/).map((line, idx) => {
-    const semantic = preprocessLine(line, state)
+    let semantic = preprocessLine(line, state)
+    const expanded = expandMacroLine(semantic, state)
+    if (expanded !== null && expanded !== semantic) {
+      semantic = expanded
+    }
     const parsed = parseLine(semantic, idx)
     if (semantic !== line) {
       return { ...parsed, raw: line, indent: /^\s*/.exec(line)?.[0] ?? '' }

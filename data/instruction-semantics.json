@@ -950,5 +950,632 @@
     "templates": {
       "": "保留四字(64 位)空间(不初始化)"
     }
+  },
+  "movss": {
+    "summary": "单精度浮点标量传送",
+    "description": "在 {src} 与 {dst} 之间传送一个 32 位单精度浮点值",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "在 {src} 与 {dst} 之间传送一个 32 位单精度浮点值",
+      "reg,mem": "在 {src} 与 {dst} 之间传送一个 32 位单精度浮点值",
+      "mem,reg": "在 {src} 与 {dst} 之间传送一个 32 位单精度浮点值"
+    }
+  },
+  "addss": {
+    "summary": "单精度浮点标量加法",
+    "description": "将 {src} 的低 32 位浮点值加到 {dst} 的低 32 位",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "将 {src} 的低 32 位浮点值加到 {dst} 的低 32 位",
+      "reg,mem": "将 {src} 的低 32 位浮点值加到 {dst} 的低 32 位"
+    }
+  },
+  "subss": {
+    "summary": "单精度浮点标量减法",
+    "description": "用 {dst} 的低 32 位浮点值减去 {src} 的低 32 位",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "用 {dst} 的低 32 位浮点值减去 {src} 的低 32 位",
+      "reg,mem": "用 {dst} 的低 32 位浮点值减去 {src} 的低 32 位"
+    }
+  },
+  "mulss": {
+    "summary": "单精度浮点标量乘法",
+    "description": "将 {dst} 与 {src} 的低 32 位浮点值相乘",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "将 {dst} 与 {src} 的低 32 位浮点值相乘",
+      "reg,mem": "将 {dst} 与 {src} 的低 32 位浮点值相乘"
+    }
+  },
+  "divss": {
+    "summary": "单精度浮点标量除法",
+    "description": "用 {dst} 的低 32 位浮点值除以 {src} 的低 32 位",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "用 {dst} 的低 32 位浮点值除以 {src} 的低 32 位",
+      "reg,mem": "用 {dst} 的低 32 位浮点值除以 {src} 的低 32 位"
+    }
+  },
+  "sqrtss": {
+    "summary": "单精度浮点标量开方",
+    "description": "对 {src} 的低 32 位浮点值求平方根",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "对 {src} 的低 32 位浮点值求平方根",
+      "reg,mem": "对 {src} 的低 32 位浮点值求平方根"
+    }
+  },
+  "maxss": {
+    "summary": "单精度浮点标量取大",
+    "description": "取 {dst} 与 {src} 低 32 位浮点值中较大者",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "取 {dst} 与 {src} 低 32 位浮点值中较大者",
+      "reg,mem": "取 {dst} 与 {src} 低 32 位浮点值中较大者"
+    }
+  },
+  "minss": {
+    "summary": "单精度浮点标量取小",
+    "description": "取 {dst} 与 {src} 低 32 位浮点值中较小者",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "取 {dst} 与 {src} 低 32 位浮点值中较小者",
+      "reg,mem": "取 {dst} 与 {src} 低 32 位浮点值中较小者"
+    }
+  },
+  "cvtss2si": {
+    "summary": "单精度浮点转有符号整数",
+    "description": "将 {src} 低 32 位浮点值转换为有符号整数",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "将 {src} 低 32 位浮点值转换为有符号整数",
+      "reg,mem": "将 {src} 低 32 位浮点值转换为有符号整数"
+    }
+  },
+  "cvtsi2ss": {
+    "summary": "有符号整数转单精度浮点",
+    "description": "将 {src} 的有符号整数转换为 32 位浮点值",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "将 {src} 的有符号整数转换为 32 位浮点值",
+      "reg,mem": "将 {src} 的有符号整数转换为 32 位浮点值"
+    }
+  },
+  "movaps": {
+    "summary": "对齐打包单精度传送",
+    "description": "在对齐的 {src} 与 {dst} 间传送 4 个打包单精度浮点值",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "在对齐的 {src} 与 {dst} 间传送 4 个打包单精度浮点值",
+      "reg,mem": "在对齐的 {src} 与 {dst} 间传送 4 个打包单精度浮点值",
+      "mem,reg": "在对齐的 {src} 与 {dst} 间传送 4 个打包单精度浮点值"
+    }
+  },
+  "movups": {
+    "summary": "非对齐打包单精度传送",
+    "description": "在非对齐的 {src} 与 {dst} 间传送 4 个打包单精度浮点值",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "在非对齐的 {src} 与 {dst} 间传送 4 个打包单精度浮点值",
+      "reg,mem": "在非对齐的 {src} 与 {dst} 间传送 4 个打包单精度浮点值",
+      "mem,reg": "在非对齐的 {src} 与 {dst} 间传送 4 个打包单精度浮点值"
+    }
+  },
+  "addps": {
+    "summary": "打包单精度浮点加法",
+    "description": "对 {dst} 与 {src} 的 4 对单精度浮点值逐分量相加",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "对 {dst} 与 {src} 的 4 对单精度浮点值逐分量相加",
+      "reg,mem": "对 {dst} 与 {src} 的 4 对单精度浮点值逐分量相加"
+    }
+  },
+  "subps": {
+    "summary": "打包单精度浮点减法",
+    "description": "用 {dst} 的 4 个浮点分量逐分量减去 {src} 的对应分量",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "用 {dst} 的 4 个浮点分量逐分量减去 {src} 的对应分量",
+      "reg,mem": "用 {dst} 的 4 个浮点分量逐分量减去 {src} 的对应分量"
+    }
+  },
+  "mulps": {
+    "summary": "打包单精度浮点乘法",
+    "description": "将 {dst} 与 {src} 的 4 对浮点分量逐分量相乘",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "将 {dst} 与 {src} 的 4 对浮点分量逐分量相乘",
+      "reg,mem": "将 {dst} 与 {src} 的 4 对浮点分量逐分量相乘"
+    }
+  },
+  "divps": {
+    "summary": "打包单精度浮点除法",
+    "description": "用 {dst} 的 4 个浮点分量逐分量除以 {src} 的对应分量",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "用 {dst} 的 4 个浮点分量逐分量除以 {src} 的对应分量",
+      "reg,mem": "用 {dst} 的 4 个浮点分量逐分量除以 {src} 的对应分量"
+    }
+  },
+  "andps": {
+    "summary": "打包单精度按位与",
+    "description": "对 {dst} 与 {src} 执行 128 位按位与",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "对 {dst} 与 {src} 执行 128 位按位与",
+      "reg,mem": "对 {dst} 与 {src} 执行 128 位按位与"
+    }
+  },
+  "orps": {
+    "summary": "打包单精度按位或",
+    "description": "对 {dst} 与 {src} 执行 128 位按位或",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "对 {dst} 与 {src} 执行 128 位按位或",
+      "reg,mem": "对 {dst} 与 {src} 执行 128 位按位或"
+    }
+  },
+  "xorps": {
+    "summary": "打包单精度按位异或",
+    "description": "对 {dst} 与 {src} 执行 128 位按位异或（常用于寄存器清零）",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "对 {dst} 与 {src} 执行 128 位按位异或（常用于寄存器清零）",
+      "reg,mem": "对 {dst} 与 {src} 执行 128 位按位异或（常用于寄存器清零）"
+    }
+  },
+  "cmpps": {
+    "summary": "打包单精度浮点比较",
+    "description": "按 {imm} 给出的条件逐分量比较 {dst} 与 {src} 的浮点值",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "按 {imm} 给出的条件逐分量比较 {dst} 与 {src} 的浮点值",
+      "reg,mem": "按 {imm} 给出的条件逐分量比较 {dst} 与 {src} 的浮点值"
+    }
+  },
+  "sqrtps": {
+    "summary": "打包单精度浮点开方",
+    "description": "对 {src} 的 4 个浮点分量逐分量求平方根",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "对 {src} 的 4 个浮点分量逐分量求平方根",
+      "reg,mem": "对 {src} 的 4 个浮点分量逐分量求平方根"
+    }
+  },
+  "maxps": {
+    "summary": "打包单精度浮点取大",
+    "description": "逐分量取 {dst} 与 {src} 浮点值中较大者",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "逐分量取 {dst} 与 {src} 浮点值中较大者",
+      "reg,mem": "逐分量取 {dst} 与 {src} 浮点值中较大者"
+    }
+  },
+  "minps": {
+    "summary": "打包单精度浮点取小",
+    "description": "逐分量取 {dst} 与 {src} 浮点值中较小者",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "逐分量取 {dst} 与 {src} 浮点值中较小者",
+      "reg,mem": "逐分量取 {dst} 与 {src} 浮点值中较小者"
+    }
+  },
+  "unpcklps": {
+    "summary": "打包单精度低位交叉",
+    "description": "交织 {dst} 与 {src} 的低半部分单精度分量",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "交织 {dst} 与 {src} 的低半部分单精度分量",
+      "reg,mem": "交织 {dst} 与 {src} 的低半部分单精度分量"
+    }
+  },
+  "unpckhps": {
+    "summary": "打包单精度高位交叉",
+    "description": "交织 {dst} 与 {src} 的高半部分单精度分量",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "交织 {dst} 与 {src} 的高半部分单精度分量",
+      "reg,mem": "交织 {dst} 与 {src} 的高半部分单精度分量"
+    }
+  },
+  "shufps": {
+    "summary": "打包单精度混洗",
+    "description": "按 {imm} 的 2 位选择子混洗 {dst} 与 {src} 的单精度分量",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "按 {imm} 的 2 位选择子混洗 {dst} 与 {src} 的单精度分量",
+      "reg,mem": "按 {imm} 的 2 位选择子混洗 {dst} 与 {src} 的单精度分量"
+    }
+  },
+  "movapd": {
+    "summary": "对齐打包双精度传送",
+    "description": "在对齐的 {src} 与 {dst} 间传送 2 个打包双精度浮点值",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "在对齐的 {src} 与 {dst} 间传送 2 个打包双精度浮点值",
+      "reg,mem": "在对齐的 {src} 与 {dst} 间传送 2 个打包双精度浮点值",
+      "mem,reg": "在对齐的 {src} 与 {dst} 间传送 2 个打包双精度浮点值"
+    }
+  },
+  "movupd": {
+    "summary": "非对齐打包双精度传送",
+    "description": "在非对齐的 {src} 与 {dst} 间传送 2 个打包双精度浮点值",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "在非对齐的 {src} 与 {dst} 间传送 2 个打包双精度浮点值",
+      "reg,mem": "在非对齐的 {src} 与 {dst} 间传送 2 个打包双精度浮点值",
+      "mem,reg": "在非对齐的 {src} 与 {dst} 间传送 2 个打包双精度浮点值"
+    }
+  },
+  "addpd": {
+    "summary": "打包双精度浮点加法",
+    "description": "对 {dst} 与 {src} 的 2 对双精度浮点值逐分量相加",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "对 {dst} 与 {src} 的 2 对双精度浮点值逐分量相加",
+      "reg,mem": "对 {dst} 与 {src} 的 2 对双精度浮点值逐分量相加"
+    }
+  },
+  "subpd": {
+    "summary": "打包双精度浮点减法",
+    "description": "用 {dst} 的 2 个双精度分量逐分量减去 {src} 的对应分量",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "用 {dst} 的 2 个双精度分量逐分量减去 {src} 的对应分量",
+      "reg,mem": "用 {dst} 的 2 个双精度分量逐分量减去 {src} 的对应分量"
+    }
+  },
+  "mulpd": {
+    "summary": "打包双精度浮点乘法",
+    "description": "将 {dst} 与 {src} 的 2 对双精度分量逐分量相乘",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "将 {dst} 与 {src} 的 2 对双精度分量逐分量相乘",
+      "reg,mem": "将 {dst} 与 {src} 的 2 对双精度分量逐分量相乘"
+    }
+  },
+  "divpd": {
+    "summary": "打包双精度浮点除法",
+    "description": "用 {dst} 的 2 个双精度分量逐分量除以 {src} 的对应分量",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "用 {dst} 的 2 个双精度分量逐分量除以 {src} 的对应分量",
+      "reg,mem": "用 {dst} 的 2 个双精度分量逐分量除以 {src} 的对应分量"
+    }
+  },
+  "andpd": {
+    "summary": "打包双精度按位与",
+    "description": "对 {dst} 与 {src} 执行 128 位按位与",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "对 {dst} 与 {src} 执行 128 位按位与",
+      "reg,mem": "对 {dst} 与 {src} 执行 128 位按位与"
+    }
+  },
+  "orpd": {
+    "summary": "打包双精度按位或",
+    "description": "对 {dst} 与 {src} 执行 128 位按位或",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "对 {dst} 与 {src} 执行 128 位按位或",
+      "reg,mem": "对 {dst} 与 {src} 执行 128 位按位或"
+    }
+  },
+  "xorpd": {
+    "summary": "打包双精度按位异或",
+    "description": "对 {dst} 与 {src} 执行 128 位按位异或（常用于寄存器清零）",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "对 {dst} 与 {src} 执行 128 位按位异或（常用于寄存器清零）",
+      "reg,mem": "对 {dst} 与 {src} 执行 128 位按位异或（常用于寄存器清零）"
+    }
+  },
+  "cvtsi2sd": {
+    "summary": "有符号整数转双精度浮点",
+    "description": "将 {src} 的有符号整数转换为 64 位双精度浮点值",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "将 {src} 的有符号整数转换为 64 位双精度浮点值",
+      "reg,mem": "将 {src} 的有符号整数转换为 64 位双精度浮点值"
+    }
+  },
+  "cvtsd2si": {
+    "summary": "双精度浮点转有符号整数",
+    "description": "将 {src} 低 64 位双精度浮点值转换为有符号整数",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "将 {src} 低 64 位双精度浮点值转换为有符号整数",
+      "reg,mem": "将 {src} 低 64 位双精度浮点值转换为有符号整数"
+    }
+  },
+  "movsd_fp": {
+    "summary": "双精度浮点标量传送",
+    "description": "在 {src} 与 {dst} 之间传送一个 64 位双精度浮点值(xmm 操作数形式)",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "在 {src} 与 {dst} 之间传送一个 64 位双精度浮点值(xmm 操作数形式)",
+      "reg,mem": "在 {src} 与 {dst} 之间传送一个 64 位双精度浮点值(xmm 操作数形式)",
+      "mem,reg": "在 {src} 与 {dst} 之间传送一个 64 位双精度浮点值(xmm 操作数形式)"
+    }
+  },
+  "cmpsd_fp": {
+    "summary": "双精度浮点标量比较",
+    "description": "按 {imm} 条件比较 {dst} 与 {src} 的双精度浮点值(xmm 操作数形式)",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg": "按 {imm} 条件比较 {dst} 与 {src} 的双精度浮点值(xmm 操作数形式)",
+      "reg,mem": "按 {imm} 条件比较 {dst} 与 {src} 的双精度浮点值(xmm 操作数形式)"
+    }
+  },
+  "vmovaps": {
+    "summary": "对齐打包单精度传送 (AVX)",
+    "description": "在对齐的 {src} 与 {dst} 间传送打包单精度浮点值",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "在对齐的 {src} 与 {dst} 间传送打包单精度浮点值",
+      "reg,reg,mem": "在对齐的 {src} 与 {dst} 间传送打包单精度浮点值"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vmovups": {
+    "summary": "非对齐打包单精度传送 (AVX)",
+    "description": "在非对齐的 {src} 与 {dst} 间传送打包单精度浮点值",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "在非对齐的 {src} 与 {dst} 间传送打包单精度浮点值",
+      "reg,reg,mem": "在非对齐的 {src} 与 {dst} 间传送打包单精度浮点值"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vmovss": {
+    "summary": "单精度浮点标量传送 (AVX)",
+    "description": "在 {src} 与 {dst} 之间传送一个 32 位单精度浮点值",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "在 {src} 与 {dst} 之间传送一个 32 位单精度浮点值",
+      "reg,reg,mem": "在 {src} 与 {dst} 之间传送一个 32 位单精度浮点值"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vmovapd": {
+    "summary": "对齐打包双精度传送 (AVX)",
+    "description": "在对齐的 {src} 与 {dst} 间传送打包双精度浮点值",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "在对齐的 {src} 与 {dst} 间传送打包双精度浮点值",
+      "reg,reg,mem": "在对齐的 {src} 与 {dst} 间传送打包双精度浮点值"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vmovupd": {
+    "summary": "非对齐打包双精度传送 (AVX)",
+    "description": "在非对齐的 {src} 与 {dst} 间传送打包双精度浮点值",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "在非对齐的 {src} 与 {dst} 间传送打包双精度浮点值",
+      "reg,reg,mem": "在非对齐的 {src} 与 {dst} 间传送打包双精度浮点值"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vaddps": {
+    "summary": "打包单精度浮点加法 (AVX)",
+    "description": "对 {src} 与 {src2} 的浮点分量逐分量相加，结果存入 {dst}",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "对 {src} 与 {src2} 的浮点分量逐分量相加，结果存入 {dst}",
+      "reg,reg,mem": "对 {src} 与 {src2} 的浮点分量逐分量相加，结果存入 {dst}"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vsubps": {
+    "summary": "打包单精度浮点减法 (AVX)",
+    "description": "用 {src} 的分量逐分量减去 {src2} 的对应分量，结果存入 {dst}",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "用 {src} 的分量逐分量减去 {src2} 的对应分量，结果存入 {dst}",
+      "reg,reg,mem": "用 {src} 的分量逐分量减去 {src2} 的对应分量，结果存入 {dst}"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vmulps": {
+    "summary": "打包单精度浮点乘法 (AVX)",
+    "description": "将 {src} 与 {src2} 的浮点分量逐分量相乘，结果存入 {dst}",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "将 {src} 与 {src2} 的浮点分量逐分量相乘，结果存入 {dst}",
+      "reg,reg,mem": "将 {src} 与 {src2} 的浮点分量逐分量相乘，结果存入 {dst}"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vdivps": {
+    "summary": "打包单精度浮点除法 (AVX)",
+    "description": "用 {src} 的分量逐分量除以 {src2} 的对应分量，结果存入 {dst}",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "用 {src} 的分量逐分量除以 {src2} 的对应分量，结果存入 {dst}",
+      "reg,reg,mem": "用 {src} 的分量逐分量除以 {src2} 的对应分量，结果存入 {dst}"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vandps": {
+    "summary": "打包单精度按位与 (AVX)",
+    "description": "对 {src} 与 {src2} 执行按位与，结果存入 {dst}",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "对 {src} 与 {src2} 执行按位与，结果存入 {dst}",
+      "reg,reg,mem": "对 {src} 与 {src2} 执行按位与，结果存入 {dst}"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vorps": {
+    "summary": "打包单精度按位或 (AVX)",
+    "description": "对 {src} 与 {src2} 执行按位或，结果存入 {dst}",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "对 {src} 与 {src2} 执行按位或，结果存入 {dst}",
+      "reg,reg,mem": "对 {src} 与 {src2} 执行按位或，结果存入 {dst}"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vxorps": {
+    "summary": "打包单精度按位异或 (AVX)",
+    "description": "对 {src} 与 {src2} 执行按位异或，结果存入 {dst}",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "对 {src} 与 {src2} 执行按位异或，结果存入 {dst}",
+      "reg,reg,mem": "对 {src} 与 {src2} 执行按位异或，结果存入 {dst}"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vsqrtps": {
+    "summary": "打包单精度浮点开方 (AVX)",
+    "description": "对 {src} 的浮点分量逐分量求平方根，结果存入 {dst}",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "对 {src} 的浮点分量逐分量求平方根，结果存入 {dst}",
+      "reg,reg,mem": "对 {src} 的浮点分量逐分量求平方根，结果存入 {dst}"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vmaxps": {
+    "summary": "打包单精度浮点取大 (AVX)",
+    "description": "逐分量取 {src} 与 {src2} 中较大者，结果存入 {dst}",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "逐分量取 {src} 与 {src2} 中较大者，结果存入 {dst}",
+      "reg,reg,mem": "逐分量取 {src} 与 {src2} 中较大者，结果存入 {dst}"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vminps": {
+    "summary": "打包单精度浮点取小 (AVX)",
+    "description": "逐分量取 {src} 与 {src2} 中较小者，结果存入 {dst}",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "逐分量取 {src} 与 {src2} 中较小者，结果存入 {dst}",
+      "reg,reg,mem": "逐分量取 {src} 与 {src2} 中较小者，结果存入 {dst}"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vaddss": {
+    "summary": "单精度浮点标量加法 (AVX)",
+    "description": "将 {src} 与 {src2} 的低 32 位浮点值相加，结果存入 {dst}",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "将 {src} 与 {src2} 的低 32 位浮点值相加，结果存入 {dst}",
+      "reg,reg,mem": "将 {src} 与 {src2} 的低 32 位浮点值相加，结果存入 {dst}"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vsubss": {
+    "summary": "单精度浮点标量减法 (AVX)",
+    "description": "用 {src} 减去 {src2} 的低 32 位浮点值，结果存入 {dst}",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "用 {src} 减去 {src2} 的低 32 位浮点值，结果存入 {dst}",
+      "reg,reg,mem": "用 {src} 减去 {src2} 的低 32 位浮点值，结果存入 {dst}"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vmulss": {
+    "summary": "单精度浮点标量乘法 (AVX)",
+    "description": "将 {src} 与 {src2} 的低 32 位浮点值相乘，结果存入 {dst}",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "将 {src} 与 {src2} 的低 32 位浮点值相乘，结果存入 {dst}",
+      "reg,reg,mem": "将 {src} 与 {src2} 的低 32 位浮点值相乘，结果存入 {dst}"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vdivss": {
+    "summary": "单精度浮点标量除法 (AVX)",
+    "description": "用 {src} 除以 {src2} 的低 32 位浮点值，结果存入 {dst}",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "用 {src} 除以 {src2} 的低 32 位浮点值，结果存入 {dst}",
+      "reg,reg,mem": "用 {src} 除以 {src2} 的低 32 位浮点值，结果存入 {dst}"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vbroadcastss": {
+    "summary": "单精度广播 (AVX)",
+    "description": "将 {src} 的 32 位值广播到 {dst} 的所有分量",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "将 {src} 的 32 位值广播到 {dst} 的所有分量",
+      "reg,reg,mem": "将 {src} 的 32 位值广播到 {dst} 的所有分量"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
+  },
+  "vcvtsi2ss": {
+    "summary": "整数转单精度浮点 (AVX)",
+    "description": "将 {src2} 的整数转换为浮点值，合并进 {dst}",
+    "category": "simd",
+    "flags_affected": "none",
+    "templates": {
+      "reg,reg,reg": "将 {src2} 的整数转换为浮点值，合并进 {dst}",
+      "reg,reg,mem": "将 {src2} 的整数转换为浮点值，合并进 {dst}"
+    },
+    "detail": "AVX 三操作数形式: 结果写 {dst}, 源操作数不被破坏"
   }
 }

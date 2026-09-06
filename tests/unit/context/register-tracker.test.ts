@@ -49,10 +49,24 @@ describe('register-tracker', () => {
     expect(snap.get(2)?.rax?.isConstant).toBe(false)
   })
 
-  it('跳转目标处状态重置', () => {
+  it('纯顺流标签（非跳转目标）保留线性状态', () => {
     const snap = snapshots('mov rax, 1\nloop_top:\nmov rbx, rax')
-    // loop_top 是块入口 → 快照中 rax 无已知状态
-    expect(snap.get(2)?.rax).toBeUndefined()
+    expect(snap.get(2)?.rax).toMatchObject({ value: 1 })
+  })
+
+  it('汇合点：多来源同值常量保留', () => {
+    const snap = snapshots('mov rax, 10\ncmp rbx, 5\nje equal\nmov rax, 10\nequal:\nmov rcx, rax')
+    expect(snap.get(5)?.rax).toMatchObject({ value: 10 })
+  })
+
+  it('汇合点：多来源异值置 unknown', () => {
+    const snap = snapshots('cmp rbx, 5\nje equal\nmov rax, 99\nequal:\nmov rcx, rax')
+    expect(snap.get(4)?.rax).toBeUndefined()
+  })
+
+  it('单一来源跳转目标采用来源状态', () => {
+    const snap = snapshots('mov rax, 1\njz skip\nskip:\nmov rbx, rax\nnop')
+    expect(snap.get(3)?.rax).toMatchObject({ value: 1 })
   })
 
   it('写宽寄存器后子寄存器失效', () => {

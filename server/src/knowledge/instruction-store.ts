@@ -6,7 +6,18 @@
  * 2. 单位置通配（如 `reg,*`、`*,imm`），从最右位置向左尝试
  * 3. 由调用方回落到 description 字段
  */
-import type { InstructionEntry, InstructionSemantics, CommentLanguage, OperandsSignature } from '../types'
+import type { InstructionEntry, InstructionSemantics, CommentLanguage, OperandsSignature, Operand } from '../types'
+
+/**
+ * 助记符路由键：movsd/cmpsd 与串指令同名——当操作数含 xmm 寄存器时
+ * 路由到 SIMD 条目（key 加 _fp 后缀），否则保持串指令语义。
+ */
+export function resolveMnemonicKey(mnemonic: string, operands: Operand[]): string {
+  if ((mnemonic === 'movsd' || mnemonic === 'cmpsd') && operands.some((o) => o.register?.startsWith('xmm'))) {
+    return mnemonic + '_fp'
+  }
+  return mnemonic
+}
 
 export class InstructionStore {
   private readonly data: InstructionSemantics

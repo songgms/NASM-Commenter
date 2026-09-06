@@ -49,14 +49,14 @@ describe('hoverAt', () => {
 
   it('宏常量悬停显示定义值', () => {
     const defines = new Map([['BUF', '1024']])
-    const md = hoverAt('    mov rax, BUF', 13, 'linux-x64', stores, defines)
+    const md = hoverAt('    mov rax, BUF', 13, 'linux-x64', stores, { defines })
     expect(md).toContain('BUF')
     expect(md).toContain('1024')
   })
 
   it('宏常量优先于指令 hover', () => {
     const defines = new Map([['mov', 'xor']])
-    const md = hoverAt('mov rax, 1', 1, 'linux-x64', stores, defines)
+    const md = hoverAt('mov rax, 1', 1, 'linux-x64', stores, { defines })
     expect(md).toContain('宏常量')
   })
 

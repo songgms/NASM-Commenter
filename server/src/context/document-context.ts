@@ -9,9 +9,11 @@ import type {
   ParsedLine,
   RegisterStateMap,
   StackFrameInfo,
+  StructDef,
   SyscallContext
 } from '../types'
 import type { SyscallStore } from '../knowledge/syscall-store'
+import { parseStructs } from './struct-table'
 import { trackRegisters } from './register-tracker'
 import { trackFunctions } from './function-tracker'
 import { trackLoops } from './loop-tracker'
@@ -49,6 +51,8 @@ export class DocumentContext {
   private readonly registerSnapshots: Map<number, RegisterStateMap>
   private readonly loops: Map<number, LoopInfo>
   private readonly stackFrames: Map<number, StackFrameInfo>
+  /** 结构体表（struc/endstruc 解析，全文档共享） */
+  readonly structs: Map<string, StructDef>
 
   constructor(lines: ParsedLine[], abi: ABI, private readonly syscalls: SyscallStore) {
     this.lines = lines
@@ -73,6 +77,7 @@ export class DocumentContext {
     this.registerSnapshots = trackRegisters(lines)
     this.loops = trackLoops(lines)
     this.stackFrames = detectStackFrames(lines)
+    this.structs = parseStructs(lines)
   }
 
   /** 指定行所在函数；不在任何函数内返回 null。 */
@@ -145,7 +150,7 @@ export class DocumentContext {
     if (line?.kind !== 'instruction' || line.mnemonic === undefined) {
       return null
     }
-    const isX86 = this.abi === 'linux-x86'
+    const isX86 = this.abi === 'linux-x86' || this.abi === 'macos-x86'
     const isSyscall = line.mnemonic === 'syscall'
     const isInt80 = line.mnemonic === 'int' && line.operands[0]?.type === 'immediate' && line.operands[0].immediate === 0x80
     if (!isSyscall && !isInt80) {
@@ -203,7 +208,8 @@ export class DocumentContext {
         registers: this.registerSnapshots.get(line.lineNumber) ?? {},
         stackFrame: activeFrame,
         syscall: this.getSyscallContext(line.lineNumber) ?? undefined,
-        loop: this.loops.get(line.lineNumber)
+        loop: this.loops.get(line.lineNumber),
+        structs: this.structs
       })
     }
     return result

@@ -78,6 +78,24 @@ export interface LoopInfo {
   counterRegister?: string
 }
 
+/** 结构体字段（struc/endstruc 解析结果）。 */
+export interface StructField {
+  /** 字段名（不含结构体前缀的点） */
+  name: string
+  /** 字段偏移（字节） */
+  offset: number
+  /** 字段大小（字节） */
+  size: number
+}
+
+/** 结构体定义。 */
+export interface StructDef {
+  name: string
+  fields: StructField[]
+  /** 结构体总大小（字节） */
+  size: number
+}
+
 /** 单行上下文快照。 */
 export interface LineContextData {
   line: number
@@ -92,4 +110,6 @@ export interface LineContextData {
   syscall?: SyscallContext
   /** 该行属于某个已识别循环时给出 */
   loop?: LoopInfo
+  /** 全文档结构体表（共享引用） */
+  structs?: Map<string, StructDef>
 }

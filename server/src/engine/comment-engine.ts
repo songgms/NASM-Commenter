@@ -18,6 +18,9 @@ import type {
 } from '../types'
 import type { KnowledgeStores } from '../knowledge'
 import type { MatchedPattern } from '../knowledge/pattern-store'
+import { resolveMnemonicKey } from '../knowledge/instruction-store'
+import type { MacroDef, PreprocessIssue } from '../lexer/preprocessor'
+import { analyzePreprocessor } from '../lexer/preprocessor'
 import { parseDocument } from '../lexer/line-parser'
 import { detectABI } from '../utils/abi-detector'
 import { DocumentContext } from '../context/document-context'
@@ -64,7 +67,8 @@ function patternResult(match: MatchedPattern, line: ParsedLine, config: CommentC
 export class CommentEngine {
   constructor(
     private readonly stores: KnowledgeStores,
-    private readonly llm?: LLMAdapter
+    private readonly llm?: LLMAdapter,
+    private readonly macros?: Map<string, MacroDef>
   ) {}
 
   /**
@@ -86,11 +90,12 @@ export class CommentEngine {
         break
       }
       case 'instruction': {
-        const handler = line.mnemonic !== undefined ? getHandler(line.mnemonic) : null
+        const key = line.mnemonic !== undefined ? resolveMnemonicKey(line.mnemonic, line.operands) : undefined
+        const handler = key !== undefined ? getHandler(key) : null
         result = handler !== null
           ? handler(line, ctx, this.stores, config)
-          : (line.mnemonic !== undefined
-            ? generateFromTemplate(line.mnemonic, line, this.stores, config) ?? unknownResult(line)
+          : (key !== undefined
+            ? generateFromTemplate(key, line, this.stores, config) ?? this.macroCallResult(line) ?? unknownResult(line)
             : null)
         break
       }
@@ -100,8 +105,25 @@ export class CommentEngine {
     return this.finalize(line, result, config)
   }
 
-  /** 后置过滤：去重 → 保护已有注释（跳过时保留 comment 供移除流程匹配）。 */
-  private finalize(line: ParsedLine, result: CommentResult | null, config: CommentConfig): CommentResult | null {
+  /** 宏调用注释：未收录但命中已定义宏的助记符。 */
+  private macroCallResult(line: ParsedLine): CommentResult | null {
+    if (line.mnemonic === undefined || this.macros === undefined) {
+      return null
+    }
+    const macro = this.macros.get(line.mnemonic)
+    if (macro === undefined) {
+      return null
+    }
+    const raws = line.operands.map((o) => o.raw).join(', ')
+    return {
+      comment: `调用宏 ${macro.name}(${raws})`,
+      confidence: 0.8,
+      source: 'rule',
+      detail: macro.nested ? '复杂宏, 语义解析受限' : `宏体 ${macro.body.length} 行, 参数 ${macro.argCount} 个`
+    }
+  }
+
+  /** 后置过滤：去重 → 保护已有注释（跳过时保留 comment 供移除流程匹配）。 */  private finalize(line: ParsedLine, result: CommentResult | null, config: CommentConfig): CommentResult | null {
     if (result === null || result.skipped === true) {
       return result
     }
@@ -225,6 +247,13 @@ export interface SourceAnnotation {
   /** 文档上下文（函数注释等后续使用） */
   context: DocumentContext
   matches: MatchedPattern[]
+  /** 预处理分析：不平衡/复杂宏诊断、条件块行、include 列表 */
+  preprocess: {
+    issues: PreprocessIssue[]
+    conditionalLines: Set<number>
+    includes: string[]
+    macros: Map<string, MacroDef>
+  }
 }
 
 /**
@@ -242,14 +271,28 @@ export function annotateSource(
   const context = new DocumentContext(lines, abi, stores.syscalls)
   const contexts = context.buildLineContexts()
   const matches = matchPatterns(lines, stores)
+  const analysis = analyzePreprocessor(text)
 
-  const engine = new CommentEngine(stores, undefined)
+  const engine = new CommentEngine(stores, undefined, analysis.macros)
   let target = lines
   if (range !== undefined) {
     target = lines.filter((l) => l.lineNumber >= range.startLine && l.lineNumber <= range.endLine)
   }
   const { comments, stats } = engine.annotateDocument(target, contexts, matches, config)
-  return { lines, abi, comments, stats, context, matches }
+  return {
+    lines,
+    abi,
+    comments,
+    stats,
+    context,
+    matches,
+    preprocess: {
+      issues: analysis.issues,
+      conditionalLines: analysis.conditionalLines,
+      includes: analysis.includes,
+      macros: analysis.macros
+    }
+  }
 }
 
 /** LLM 增强判定：规则兜底注释（低置信度）或完全未注释的可注释行。 */

@@ -3,13 +3,43 @@
     "id": "function-prologue-standard",
     "name": "函数序言(标准)",
     "description": "push rbp / mov rbp,rsp / sub rsp,N 标准函数序言",
-    "sequence": ["push", "mov", "sub"],
+    "sequence": [
+      "push",
+      "mov",
+      "sub"
+    ],
     "operandConstraints": [
-      { "index": 0, "operand": 0, "mustBe": "rbp" },
-      { "index": 1, "operand": 0, "sameAs": [0, 0] },
-      { "index": 1, "operand": 1, "mustBe": "rsp" },
-      { "index": 2, "operand": 0, "sameAs": [1, 1] },
-      { "index": 2, "operand": 1, "isImmediate": true }
+      {
+        "index": 0,
+        "operand": 0,
+        "mustBe": "rbp"
+      },
+      {
+        "index": 1,
+        "operand": 0,
+        "sameAs": [
+          0,
+          0
+        ]
+      },
+      {
+        "index": 1,
+        "operand": 1,
+        "mustBe": "rsp"
+      },
+      {
+        "index": 2,
+        "operand": 0,
+        "sameAs": [
+          1,
+          1
+        ]
+      },
+      {
+        "index": 2,
+        "operand": 1,
+        "isImmediate": true
+      }
     ],
     "comments": [
       "保存旧栈帧指针 rbp",
@@ -28,10 +58,20 @@
     "id": "function-prologue-leaf",
     "name": "函数序言(叶函数)",
     "description": "无 rbp 帧指针, 直接 sub rsp,N 分配局部空间",
-    "sequence": ["sub"],
+    "sequence": [
+      "sub"
+    ],
     "operandConstraints": [
-      { "index": 0, "operand": 0, "mustBe": "rsp" },
-      { "index": 0, "operand": 1, "isImmediate": true }
+      {
+        "index": 0,
+        "operand": 0,
+        "mustBe": "rsp"
+      },
+      {
+        "index": 0,
+        "operand": 1,
+        "isImmediate": true
+      }
     ],
     "comments": [
       "为叶函数分配 {imm} 字节栈空间"
@@ -46,7 +86,10 @@
     "id": "function-epilogue-leave-ret",
     "name": "函数结尾(leave/ret)",
     "description": "leave 恢复栈帧后 ret 返回",
-    "sequence": ["leave", "ret"],
+    "sequence": [
+      "leave",
+      "ret"
+    ],
     "comments": [
       "恢复栈帧(rsp = rbp, 弹出 rbp)",
       "返回调用者"
@@ -62,11 +105,27 @@
     "id": "function-epilogue-mov-pop-ret",
     "name": "函数结尾(mov/pop/ret)",
     "description": "mov rsp,rbp / pop rbp / ret 恢复栈帧并返回",
-    "sequence": ["mov", "pop", "ret"],
+    "sequence": [
+      "mov",
+      "pop",
+      "ret"
+    ],
     "operandConstraints": [
-      { "index": 0, "operand": 0, "mustBe": "rsp" },
-      { "index": 0, "operand": 1, "mustBe": "rbp" },
-      { "index": 1, "operand": 0, "mustBe": "rbp" }
+      {
+        "index": 0,
+        "operand": 0,
+        "mustBe": "rsp"
+      },
+      {
+        "index": 0,
+        "operand": 1,
+        "mustBe": "rbp"
+      },
+      {
+        "index": 1,
+        "operand": 0,
+        "mustBe": "rbp"
+      }
     ],
     "comments": [
       "恢复栈指针: rsp = rbp",
@@ -85,7 +144,9 @@
     "id": "strlen-scan",
     "name": "strlen 字符串扫描",
     "description": "repne scasb 查找字符串结尾 0 计算长度(repne 为同行的指令前缀)",
-    "sequence": ["repne scasb"],
+    "sequence": [
+      "repne scasb"
+    ],
     "comments": [
       "重复扫描直到 [rdi] 字节等于 al(找到结尾 0, strlen 的实现)"
     ],
@@ -99,14 +160,44 @@
     "id": "write-syscall",
     "name": "write 系统调用",
     "description": "mov rax,1 / mov rdi,1 / mov rsi,buf / mov rdx,len / syscall 输出字符串",
-    "sequence": ["mov", "mov", "mov", "mov", "syscall"],
+    "sequence": [
+      "mov",
+      "mov",
+      "mov",
+      "mov",
+      "syscall"
+    ],
     "operandConstraints": [
-      { "index": 0, "operand": 0, "mustBe": "rax" },
-      { "index": 0, "operand": 1, "mustBe": "1" },
-      { "index": 1, "operand": 0, "mustBe": "rdi" },
-      { "index": 1, "operand": 1, "mustBe": "1" },
-      { "index": 2, "operand": 0, "mustBe": "rsi" },
-      { "index": 3, "operand": 0, "mustBe": "rdx" }
+      {
+        "index": 0,
+        "operand": 0,
+        "mustBe": "rax"
+      },
+      {
+        "index": 0,
+        "operand": 1,
+        "mustBe": "1"
+      },
+      {
+        "index": 1,
+        "operand": 0,
+        "mustBe": "rdi"
+      },
+      {
+        "index": 1,
+        "operand": 1,
+        "mustBe": "1"
+      },
+      {
+        "index": 2,
+        "operand": 0,
+        "mustBe": "rsi"
+      },
+      {
+        "index": 3,
+        "operand": 0,
+        "mustBe": "rdx"
+      }
     ],
     "comments": [
       "系统调用号 1(write)",
@@ -129,12 +220,35 @@
     "id": "exit-syscall-xor",
     "name": "exit 系统调用(清零参数)",
     "description": "mov rax,60 / xor rdi,rdi / syscall 以退出码 0 终止进程",
-    "sequence": ["mov", "xor", "syscall"],
+    "sequence": [
+      "mov",
+      "xor",
+      "syscall"
+    ],
     "operandConstraints": [
-      { "index": 0, "operand": 0, "mustBe": "rax" },
-      { "index": 0, "operand": 1, "mustBe": "60" },
-      { "index": 1, "operand": 0, "mustBe": "rdi" },
-      { "index": 1, "operand": 1, "sameAs": [1, 0] }
+      {
+        "index": 0,
+        "operand": 0,
+        "mustBe": "rax"
+      },
+      {
+        "index": 0,
+        "operand": 1,
+        "mustBe": "60"
+      },
+      {
+        "index": 1,
+        "operand": 0,
+        "mustBe": "rdi"
+      },
+      {
+        "index": 1,
+        "operand": 1,
+        "sameAs": [
+          1,
+          0
+        ]
+      }
     ],
     "comments": [
       "系统调用号 60(exit)",
@@ -153,12 +267,32 @@
     "id": "exit-syscall-mov",
     "name": "exit 系统调用(mov 参数)",
     "description": "mov rax,60 / mov rdi,code / syscall 终止进程",
-    "sequence": ["mov", "mov", "syscall"],
+    "sequence": [
+      "mov",
+      "mov",
+      "syscall"
+    ],
     "operandConstraints": [
-      { "index": 0, "operand": 0, "mustBe": "rax" },
-      { "index": 0, "operand": 1, "mustBe": "60" },
-      { "index": 1, "operand": 0, "mustBe": "rdi" },
-      { "index": 1, "operand": 1, "isImmediate": true }
+      {
+        "index": 0,
+        "operand": 0,
+        "mustBe": "rax"
+      },
+      {
+        "index": 0,
+        "operand": 1,
+        "mustBe": "60"
+      },
+      {
+        "index": 1,
+        "operand": 0,
+        "mustBe": "rdi"
+      },
+      {
+        "index": 1,
+        "operand": 1,
+        "isImmediate": true
+      }
     ],
     "comments": [
       "系统调用号 60(exit)",
@@ -177,10 +311,25 @@
     "id": "counting-loop",
     "name": "计数循环",
     "description": "mov 计数器 / dec 递减 / jnz 回跳构成递减计数循环",
-    "sequence": ["mov", "dec", "jnz"],
+    "sequence": [
+      "mov",
+      "dec",
+      "jnz"
+    ],
     "operandConstraints": [
-      { "index": 1, "operand": 0, "sameAs": [0, 0] },
-      { "index": 2, "operand": 0, "isRegister": true }
+      {
+        "index": 1,
+        "operand": 0,
+        "sameAs": [
+          0,
+          0
+        ]
+      },
+      {
+        "index": 2,
+        "operand": 0,
+        "isRegister": true
+      }
     ],
     "comments": [
       "初始化计数器 {dst}",
@@ -194,5 +343,477 @@
     ],
     "priority": 80,
     "category": "loop"
+  },
+  {
+    "id": "register-save-2",
+    "name": "寄存器批量保存 (2)",
+    "description": "连续 2 条 push 保存寄存器",
+    "sequence": [
+      "push",
+      "push"
+    ],
+    "operandConstraints": [
+      {
+        "index": 0,
+        "operand": 0,
+        "isRegister": true
+      },
+      {
+        "index": 1,
+        "operand": 0,
+        "isRegister": true
+      }
+    ],
+    "comments": [
+      "保存寄存器 {dst}",
+      "保存寄存器 {dst}"
+    ],
+    "comments_en": [
+      "save register {dst}",
+      "save register {dst}"
+    ],
+    "priority": 50,
+    "category": "function"
+  },
+  {
+    "id": "register-restore-2",
+    "name": "寄存器批量恢复 (2)",
+    "description": "连续 2 条 pop 恢复寄存器",
+    "sequence": [
+      "pop",
+      "pop"
+    ],
+    "operandConstraints": [
+      {
+        "index": 0,
+        "operand": 0,
+        "isRegister": true
+      },
+      {
+        "index": 1,
+        "operand": 0,
+        "isRegister": true
+      }
+    ],
+    "comments": [
+      "恢复寄存器 {dst}",
+      "恢复寄存器 {dst}"
+    ],
+    "comments_en": [
+      "restore register {dst}",
+      "restore register {dst}"
+    ],
+    "priority": 50,
+    "category": "function"
+  },
+  {
+    "id": "register-save-3",
+    "name": "寄存器批量保存 (3)",
+    "description": "连续 3 条 push 保存寄存器",
+    "sequence": [
+      "push",
+      "push",
+      "push"
+    ],
+    "operandConstraints": [
+      {
+        "index": 0,
+        "operand": 0,
+        "isRegister": true
+      },
+      {
+        "index": 1,
+        "operand": 0,
+        "isRegister": true
+      },
+      {
+        "index": 2,
+        "operand": 0,
+        "isRegister": true
+      }
+    ],
+    "comments": [
+      "保存寄存器 {dst}",
+      "保存寄存器 {dst}",
+      "保存寄存器 {dst}"
+    ],
+    "comments_en": [
+      "save register {dst}",
+      "save register {dst}",
+      "save register {dst}"
+    ],
+    "priority": 50,
+    "category": "function"
+  },
+  {
+    "id": "register-restore-3",
+    "name": "寄存器批量恢复 (3)",
+    "description": "连续 3 条 pop 恢复寄存器",
+    "sequence": [
+      "pop",
+      "pop",
+      "pop"
+    ],
+    "operandConstraints": [
+      {
+        "index": 0,
+        "operand": 0,
+        "isRegister": true
+      },
+      {
+        "index": 1,
+        "operand": 0,
+        "isRegister": true
+      },
+      {
+        "index": 2,
+        "operand": 0,
+        "isRegister": true
+      }
+    ],
+    "comments": [
+      "恢复寄存器 {dst}",
+      "恢复寄存器 {dst}",
+      "恢复寄存器 {dst}"
+    ],
+    "comments_en": [
+      "restore register {dst}",
+      "restore register {dst}",
+      "restore register {dst}"
+    ],
+    "priority": 50,
+    "category": "function"
+  },
+  {
+    "id": "register-save-4",
+    "name": "寄存器批量保存 (4)",
+    "description": "连续 4 条 push 保存寄存器",
+    "sequence": [
+      "push",
+      "push",
+      "push",
+      "push"
+    ],
+    "operandConstraints": [
+      {
+        "index": 0,
+        "operand": 0,
+        "isRegister": true
+      },
+      {
+        "index": 1,
+        "operand": 0,
+        "isRegister": true
+      },
+      {
+        "index": 2,
+        "operand": 0,
+        "isRegister": true
+      },
+      {
+        "index": 3,
+        "operand": 0,
+        "isRegister": true
+      }
+    ],
+    "comments": [
+      "保存寄存器 {dst}",
+      "保存寄存器 {dst}",
+      "保存寄存器 {dst}",
+      "保存寄存器 {dst}"
+    ],
+    "comments_en": [
+      "save register {dst}",
+      "save register {dst}",
+      "save register {dst}",
+      "save register {dst}"
+    ],
+    "priority": 50,
+    "category": "function"
+  },
+  {
+    "id": "register-restore-4",
+    "name": "寄存器批量恢复 (4)",
+    "description": "连续 4 条 pop 恢复寄存器",
+    "sequence": [
+      "pop",
+      "pop",
+      "pop",
+      "pop"
+    ],
+    "operandConstraints": [
+      {
+        "index": 0,
+        "operand": 0,
+        "isRegister": true
+      },
+      {
+        "index": 1,
+        "operand": 0,
+        "isRegister": true
+      },
+      {
+        "index": 2,
+        "operand": 0,
+        "isRegister": true
+      },
+      {
+        "index": 3,
+        "operand": 0,
+        "isRegister": true
+      }
+    ],
+    "comments": [
+      "恢复寄存器 {dst}",
+      "恢复寄存器 {dst}",
+      "恢复寄存器 {dst}",
+      "恢复寄存器 {dst}"
+    ],
+    "comments_en": [
+      "restore register {dst}",
+      "restore register {dst}",
+      "restore register {dst}",
+      "restore register {dst}"
+    ],
+    "priority": 50,
+    "category": "function"
+  },
+  {
+    "id": "rep-movs-copy-b",
+    "name": "内存块拷贝 (rep movsb)",
+    "description": "rep movsb 按 rcx 次数将 [rsi] 复制到 [rdi]",
+    "sequence": [
+      "rep movsb"
+    ],
+    "comments": [
+      "内存块拷贝: 将 [rsi] 起的内存按 rcx 字节 为单位复制到 [rdi]"
+    ],
+    "comments_en": [
+      "copy memory block from [rsi] to [rdi], rcx 字节 per iteration"
+    ],
+    "priority": 70,
+    "category": "string"
+  },
+  {
+    "id": "rep-movs-copy-w",
+    "name": "内存块拷贝 (rep movsw)",
+    "description": "rep movsw 按 rcx 次数将 [rsi] 复制到 [rdi]",
+    "sequence": [
+      "rep movsw"
+    ],
+    "comments": [
+      "内存块拷贝: 将 [rsi] 起的内存按 rcx 字 (每个 2 字节) 为单位复制到 [rdi]"
+    ],
+    "comments_en": [
+      "copy memory block from [rsi] to [rdi], rcx 字 (每个 2 字节) per iteration"
+    ],
+    "priority": 70,
+    "category": "string"
+  },
+  {
+    "id": "rep-movs-copy-d",
+    "name": "内存块拷贝 (rep movsd)",
+    "description": "rep movsd 按 rcx 次数将 [rsi] 复制到 [rdi]",
+    "sequence": [
+      "rep movsd"
+    ],
+    "comments": [
+      "内存块拷贝: 将 [rsi] 起的内存按 rcx 双字 (每个 4 字节) 为单位复制到 [rdi]"
+    ],
+    "comments_en": [
+      "copy memory block from [rsi] to [rdi], rcx 双字 (每个 4 字节) per iteration"
+    ],
+    "priority": 70,
+    "category": "string"
+  },
+  {
+    "id": "cmp-branch-je",
+    "name": "比较分支 (cmp + je)",
+    "description": "cmp 设置标志位后 je 条件跳转",
+    "sequence": [
+      "cmp",
+      "je"
+    ],
+    "comments": [
+      "比较 {dst} 与 {src}, 为分支判断设置标志位",
+      "相等 (ZF=1) 时跳转到 {label}"
+    ],
+    "comments_en": [
+      "compare {dst} with {src} to set flags for the branch",
+      "jump to {label} if equal (ZF=1)"
+    ],
+    "priority": 60,
+    "category": "idiom"
+  },
+  {
+    "id": "cmp-branch-jne",
+    "name": "比较分支 (cmp + jne)",
+    "description": "cmp 设置标志位后 jne 条件跳转",
+    "sequence": [
+      "cmp",
+      "jne"
+    ],
+    "comments": [
+      "比较 {dst} 与 {src}, 为分支判断设置标志位",
+      "不相等 (ZF=0) 时跳转到 {label}"
+    ],
+    "comments_en": [
+      "compare {dst} with {src} to set flags for the branch",
+      "jump to {label} if not equal (ZF=0)"
+    ],
+    "priority": 60,
+    "category": "idiom"
+  },
+  {
+    "id": "cmp-branch-jg",
+    "name": "比较分支 (cmp + jg)",
+    "description": "cmp 设置标志位后 jg 条件跳转",
+    "sequence": [
+      "cmp",
+      "jg"
+    ],
+    "comments": [
+      "比较 {dst} 与 {src}, 为分支判断设置标志位",
+      "大于 (有符号, ZF=0 且 SF=OF) 时跳转到 {label}"
+    ],
+    "comments_en": [
+      "compare {dst} with {src} to set flags for the branch",
+      "jump to {label} if greater (signed)"
+    ],
+    "priority": 60,
+    "category": "idiom"
+  },
+  {
+    "id": "cmp-branch-jge",
+    "name": "比较分支 (cmp + jge)",
+    "description": "cmp 设置标志位后 jge 条件跳转",
+    "sequence": [
+      "cmp",
+      "jge"
+    ],
+    "comments": [
+      "比较 {dst} 与 {src}, 为分支判断设置标志位",
+      "大于等于 (有符号, SF=OF) 时跳转到 {label}"
+    ],
+    "comments_en": [
+      "compare {dst} with {src} to set flags for the branch",
+      "jump to {label} if greater or equal (signed)"
+    ],
+    "priority": 60,
+    "category": "idiom"
+  },
+  {
+    "id": "cmp-branch-jl",
+    "name": "比较分支 (cmp + jl)",
+    "description": "cmp 设置标志位后 jl 条件跳转",
+    "sequence": [
+      "cmp",
+      "jl"
+    ],
+    "comments": [
+      "比较 {dst} 与 {src}, 为分支判断设置标志位",
+      "小于 (有符号, SF 不等于 OF) 时跳转到 {label}"
+    ],
+    "comments_en": [
+      "compare {dst} with {src} to set flags for the branch",
+      "jump to {label} if less (signed)"
+    ],
+    "priority": 60,
+    "category": "idiom"
+  },
+  {
+    "id": "cmp-branch-jle",
+    "name": "比较分支 (cmp + jle)",
+    "description": "cmp 设置标志位后 jle 条件跳转",
+    "sequence": [
+      "cmp",
+      "jle"
+    ],
+    "comments": [
+      "比较 {dst} 与 {src}, 为分支判断设置标志位",
+      "小于等于 (有符号, ZF=1 或 SF 不等于 OF) 时跳转到 {label}"
+    ],
+    "comments_en": [
+      "compare {dst} with {src} to set flags for the branch",
+      "jump to {label} if less or equal (signed)"
+    ],
+    "priority": 60,
+    "category": "idiom"
+  },
+  {
+    "id": "cmp-branch-ja",
+    "name": "比较分支 (cmp + ja)",
+    "description": "cmp 设置标志位后 ja 条件跳转",
+    "sequence": [
+      "cmp",
+      "ja"
+    ],
+    "comments": [
+      "比较 {dst} 与 {src}, 为分支判断设置标志位",
+      "高于 (无符号, CF=0 且 ZF=0) 时跳转到 {label}"
+    ],
+    "comments_en": [
+      "compare {dst} with {src} to set flags for the branch",
+      "jump to {label} if above (unsigned)"
+    ],
+    "priority": 60,
+    "category": "idiom"
+  },
+  {
+    "id": "cmp-branch-jae",
+    "name": "比较分支 (cmp + jae)",
+    "description": "cmp 设置标志位后 jae 条件跳转",
+    "sequence": [
+      "cmp",
+      "jae"
+    ],
+    "comments": [
+      "比较 {dst} 与 {src}, 为分支判断设置标志位",
+      "高于等于 (无符号, CF=0) 时跳转到 {label}"
+    ],
+    "comments_en": [
+      "compare {dst} with {src} to set flags for the branch",
+      "jump to {label} if above or equal (unsigned)"
+    ],
+    "priority": 60,
+    "category": "idiom"
+  },
+  {
+    "id": "cmp-branch-jb",
+    "name": "比较分支 (cmp + jb)",
+    "description": "cmp 设置标志位后 jb 条件跳转",
+    "sequence": [
+      "cmp",
+      "jb"
+    ],
+    "comments": [
+      "比较 {dst} 与 {src}, 为分支判断设置标志位",
+      "低于 (无符号, CF=1) 时跳转到 {label}"
+    ],
+    "comments_en": [
+      "compare {dst} with {src} to set flags for the branch",
+      "jump to {label} if below (unsigned)"
+    ],
+    "priority": 60,
+    "category": "idiom"
+  },
+  {
+    "id": "cmp-branch-jbe",
+    "name": "比较分支 (cmp + jbe)",
+    "description": "cmp 设置标志位后 jbe 条件跳转",
+    "sequence": [
+      "cmp",
+      "jbe"
+    ],
+    "comments": [
+      "比较 {dst} 与 {src}, 为分支判断设置标志位",
+      "低于等于 (无符号, CF=1 或 ZF=1) 时跳转到 {label}"
+    ],
+    "comments_en": [
+      "compare {dst} with {src} to set flags for the branch",
+      "jump to {label} if below or equal (unsigned)"
+    ],
+    "priority": 60,
+    "category": "idiom"
   }
 ]

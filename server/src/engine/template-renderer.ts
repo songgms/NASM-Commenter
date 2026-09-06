@@ -9,7 +9,7 @@
  */
 import type { Operand, TemplateVariables, CommentLanguage } from '../types'
 
-const SIMPLE_VARS = ['dst', 'src', 'imm', 'mem', 'label', 'reg', 'syscall', 'count', 'size'] as const
+const SIMPLE_VARS = ['dst', 'src', 'src2', 'imm', 'mem', 'label', 'reg', 'syscall', 'count', 'size'] as const
 
 const CONDITIONAL_RE = /\{if:([^}]+)\}([\s\S]*?)\{endif\}/g
 const CTX_VAR_RE = /\{ctx:reg:([\w$]+)\}/g

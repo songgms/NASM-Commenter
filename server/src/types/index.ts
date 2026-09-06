@@ -53,6 +53,8 @@ export type {
   RegisterState,
   RegisterStateMap,
   StackFrameInfo,
+  StructField,
+  StructDef,
   SyscallContext,
   FunctionInfo,
   LoopInfo,

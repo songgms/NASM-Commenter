@@ -34,6 +34,8 @@ export interface TemplateVariables {
   dst?: string
   /** 源操作数 */
   src?: string
+  /** 第三操作数（AVX 三操作数形式） */
+  src2?: string
   /** 立即数（保留原始格式） */
   imm?: string
   /** 内存地址表达式 */

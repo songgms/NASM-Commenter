@@ -40,6 +40,7 @@ import { loadKnowledge, buildStores } from './knowledge'
 import { resolveConfig } from './utils/config-defaults'
 import { logger } from './utils/logger'
 import { collectDefines, parseDocument } from './lexer'
+import { parseStructs } from './context/struct-table'
 import { detectABI } from './utils/abi-detector'
 import { annotateSource, annotateSourceEnhanced, buildEdits, buildFunctionComment, countCoveredLines } from './engine/comment-engine'
 import { buildRemoveEdits } from './engine/deduplicator'
@@ -53,6 +54,7 @@ import { validateDocument } from './lsp/diagnostics'
 import { provideVirtualComments } from './lsp/inlay-hints'
 import type { DiagnosticData } from './lsp/diagnostics'
 import type { VirtualComment } from './lsp/inlay-hints'
+import type { StructDef } from './types'
 import { findCommentStart } from './utils/indent'
 
 export class NASMLanguageServer {
@@ -67,6 +69,8 @@ export class NASMLanguageServer {
   private virtualCache = new Map<string, { version: number; hints: VirtualComment[] }>()
   /** 每文档 %define 常量缓存（按版本失效） */
   private definesCache = new Map<string, { version: number; defines: Map<string, string> }>()
+  /** 每文档结构体表缓存（按版本失效） */
+  private structsCache = new Map<string, { version: number; structs: Map<string, StructDef> }>()
   /** 诊断防抖定时器（按 uri） */
   private readonly diagTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -101,6 +105,7 @@ export class NASMLanguageServer {
       this.abiCache.delete(event.document.uri)
       this.virtualCache.delete(event.document.uri)
       this.definesCache.delete(event.document.uri)
+      this.structsCache.delete(event.document.uri)
       this.pushCoverage(event.document)
       this.validateAndPush(event.document)
     })
@@ -108,12 +113,14 @@ export class NASMLanguageServer {
       this.abiCache.delete(event.document.uri)
       this.virtualCache.delete(event.document.uri)
       this.definesCache.delete(event.document.uri)
+      this.structsCache.delete(event.document.uri)
       this.validateAndPushDebounced(event.document)
     })
     this.documents.onDidClose((event) => {
       this.abiCache.delete(event.document.uri)
       this.virtualCache.delete(event.document.uri)
       this.definesCache.delete(event.document.uri)
+      this.structsCache.delete(event.document.uri)
       const timer = this.diagTimers.get(event.document.uri)
       if (timer !== undefined) {
         clearTimeout(timer)
@@ -212,7 +219,10 @@ export class NASMLanguageServer {
     const lines = doc.getText().split(/\r?\n/)
     const lineText = lines[params.position.line] ?? ''
     const abi = this.abiOf(doc)
-    const markdown = hoverAt(lineText, params.position.character, abi, stores, this.definesOf(doc))
+    const markdown = hoverAt(lineText, params.position.character, abi, stores, {
+      defines: this.definesOf(doc),
+      structs: this.structsOf(doc)
+    })
     if (markdown === null) {
       return null
     }
@@ -230,6 +240,17 @@ export class NASMLanguageServer {
     const defines = collectDefines(doc.getText())
     this.definesCache.set(doc.uri, { version: doc.version, defines })
     return defines
+  }
+
+  /** 每文档结构体表（按版本缓存）。 */
+  private structsOf(doc: TextDocument): Map<string, StructDef> {
+    const cached = this.structsCache.get(doc.uri)
+    if (cached !== undefined && cached.version === doc.version) {
+      return cached.structs
+    }
+    const structs = parseStructs(parseDocument(doc.getText()))
+    this.structsCache.set(doc.uri, { version: doc.version, structs })
+    return structs
   }
 
   private onCodeAction(params: {

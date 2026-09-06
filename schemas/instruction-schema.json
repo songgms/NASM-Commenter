@@ -5,25 +5,60 @@
   "description": "instruction-semantics.json 的数据格式：mnemonic → 指令语义条目",
   "type": "object",
   "patternProperties": {
-    "^[a-z%][a-z0-9%]*$": {
+    "^[a-z%][a-z0-9_%]*$": {
       "type": "object",
-      "required": ["summary", "description", "category", "flags_affected"],
+      "required": [
+        "summary",
+        "description",
+        "category",
+        "flags_affected"
+      ],
       "additionalProperties": false,
       "properties": {
-        "summary": { "type": "string", "minLength": 1, "description": "简短中文名" },
-        "description": { "type": "string", "minLength": 1, "description": "详细功能说明" },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "简短中文名"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "详细功能说明"
+        },
         "category": {
           "type": "string",
           "enum": [
-            "data-transfer", "arithmetic", "logic", "control-flow", "stack",
-            "string", "system", "fpu", "simd", "privileged", "misc"
+            "data-transfer",
+            "arithmetic",
+            "logic",
+            "control-flow",
+            "stack",
+            "string",
+            "system",
+            "fpu",
+            "simd",
+            "privileged",
+            "misc"
           ]
         },
-        "flags_affected": { "type": "string", "description": "受影响的标志位，如 CF,ZF 或 none" },
-        "templates": { "$ref": "#/definitions/templateTable" },
-        "templates_en": { "$ref": "#/definitions/templateTable" },
-        "detail": { "type": "string", "description": "verbose 模式附加说明" },
-        "operands_note": { "type": "string", "description": "操作数说明（Hover 用）" }
+        "flags_affected": {
+          "type": "string",
+          "description": "受影响的标志位，如 CF,ZF 或 none"
+        },
+        "templates": {
+          "$ref": "#/definitions/templateTable"
+        },
+        "templates_en": {
+          "$ref": "#/definitions/templateTable"
+        },
+        "detail": {
+          "type": "string",
+          "description": "verbose 模式附加说明"
+        },
+        "operands_note": {
+          "type": "string",
+          "description": "操作数说明（Hover 用）"
+        }
       }
     }
   },
