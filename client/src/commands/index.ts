@@ -12,6 +12,7 @@ import { stripAllComments } from './strip-all-comments'
 import { toggleInline } from './toggle-inline'
 import { toggleVirtual } from './toggle-virtual'
 import { gotoFirstUnannotated } from './goto-first-unannotated'
+import { clearLlmCache } from './clear-llm-cache'
 import { annotateBlockHeader } from './annotate-block-header'
 
 export function registerCommands(context: vscode.ExtensionContext, client: LanguageClient): void {
@@ -25,6 +26,7 @@ export function registerCommands(context: vscode.ExtensionContext, client: Langu
     vscode.commands.registerTextEditorCommand('nasm-commenter.gotoFirstUnannotated', () => gotoFirstUnannotated(client)),
     vscode.commands.registerTextEditorCommand('nasm-commenter.annotateBlockHeader', () => annotateBlockHeader()),
     vscode.commands.registerCommand('nasm-commenter.toggleInline', () => toggleInline()),
-    vscode.commands.registerCommand('nasm-commenter.toggleVirtual', () => toggleVirtual())
+    vscode.commands.registerCommand('nasm-commenter.toggleVirtual', () => toggleVirtual()),
+    vscode.commands.registerCommand('nasm-commenter.clearLlmCache', () => clearLlmCache(client))
   )
 }

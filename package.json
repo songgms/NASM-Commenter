@@ -94,6 +94,11 @@
         "command": "nasm-commenter.annotateBlockHeader",
         "title": "为选中区域生成块头注释",
         "category": "NASM Commenter"
+      },
+      {
+        "command": "nasm-commenter.clearLlmCache",
+        "title": "清空 LLM 缓存",
+        "category": "NASM Commenter"
       }
     ],
     "keybindings": [
@@ -236,6 +241,27 @@
           "type": "string",
           "default": "函数名: {name}\n功能: {purpose}\n参数: {args}\n返回: {return}\n破坏的寄存器: {clobbered}",
           "description": "函数块注释模板，占位符 {name} {purpose} {args} {return} {clobbered}"
+        },
+        "nasm-commenter.llm.augmentMode": {
+          "type": "string",
+          "enum": [
+            "supplement",
+            "fallback"
+          ],
+          "default": "supplement",
+          "description": "supplement=LLM 结果仅出现在虚拟注释预览；fallback=LLM 结果写入文件（无法自动移除）"
+        },
+        "nasm-commenter.llm.confidenceThreshold": {
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "低于该置信度的 LLM 输出被丢弃"
+        },
+        "nasm-commenter.llm.promptTemplate": {
+          "type": "string",
+          "default": "",
+          "description": "自定义 system 提示词（空 = 内置模板）"
         }
       }
     }
@@ -267,5 +293,8 @@
     "eslint": "^8.57.1",
     "typescript": "^5.6.3",
     "vitest": "^2.1.9"
+  },
+  "bin": {
+    "nasm-commenter-server": "./dist/server/index.js"
   }
 }

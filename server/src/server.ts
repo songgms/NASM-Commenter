@@ -40,6 +40,7 @@ import { loadKnowledge, buildStores } from './knowledge'
 import { resolveConfig } from './utils/config-defaults'
 import { logger } from './utils/logger'
 import { collectDefines, parseDocument, tokenizeLine } from './lexer'
+import { hashString } from './utils/hash'
 import { parseStructs } from './context/struct-table'
 import { buildSymbolTable } from './context/symbol-table'
 import type { SymbolEntry } from './context/symbol-table'
@@ -75,6 +76,7 @@ export class NASMLanguageServer {
   private stores: KnowledgeStores | null = null
   private config: CommentConfig = resolveConfig()
   private llm: LLMAdapter | undefined
+  private workspaceKey = ''
   /** 每文档 ABI 检测缓存（按版本失效） */
   private abiCache = new Map<string, { version: number; abi: ReturnType<typeof detectABI> }>()
   /** 每文档虚拟注释缓存（按版本失效，sections 供 textOnly 过滤） */
@@ -90,7 +92,7 @@ export class NASMLanguageServer {
 
   /** 依据最新配置重建 LLM 适配器（未启用或 provider 缺失时为 undefined）。 */
   private refreshLLM(): void {
-    this.llm = createLLMAdapter(this.config.llm)
+    this.llm = createLLMAdapter(this.config.llm, this.workspaceKey)
   }
 
   /**
@@ -173,6 +175,7 @@ export class NASMLanguageServer {
     this.connection.onRequest('nasm-commenter/removeComments', this.onRemoveComments.bind(this))
     this.connection.onRequest('nasm-commenter/stripAllComments', this.onStripAllComments.bind(this))
     this.connection.onRequest('nasm-commenter/firstUnannotated', this.onFirstUnannotated.bind(this))
+    this.connection.onRequest('nasm-commenter/clearLlmCache', this.onClearLlmCache.bind(this))
     this.connection.onDefinition(this.onDefinition.bind(this))
     this.connection.onReferences(this.onReferences.bind(this))
     this.connection.onRenameRequest(this.onRename.bind(this))
@@ -184,6 +187,7 @@ export class NASMLanguageServer {
   private onInitialize(params: InitializeParams): InitializeResult {
     const partial = params.initializationOptions as Partial<CommentConfig> | undefined
     this.config = resolveConfig(partial)
+    this.workspaceKey = hashString(params.rootUri ?? '')
     this.refreshLLM()
     try {
       const stores = buildStores(loadKnowledge())
@@ -334,7 +338,10 @@ export class NASMLanguageServer {
   }
 
   private async annotate(text: string, config: CommentConfig, range?: { startLine: number; endLine: number }): Promise<{ edits: AnnotateFileResponse['edits']; abi: ReturnType<typeof detectABI>; stats: AnnotateFileResponse['stats']; covered: number }> {
-    const ann = await annotateSourceEnhanced(text, this.requireStores(), config, this.llm, range)
+    // 写入路径：supplement 模式（默认）不调用 LLM——LLM 结果只进虚拟预览；
+    // fallback 模式写入包含 LLM 行（注意：该模式下的 LLM 行无法自动移除）
+    const useLlm = config.llm.augmentMode === 'fallback'
+    const ann = await annotateSourceEnhanced(text, this.requireStores(), config, useLlm ? this.llm : undefined, range)
     const edits = buildEdits(ann.lines, ann.comments, config)
     return { edits, abi: ann.abi, stats: ann.stats, covered: countCoveredLines(ann.comments) }
   }
@@ -343,7 +350,7 @@ export class NASMLanguageServer {
     const doc = this.requireDoc(params.textDocument.uri)
     const config = resolveConfig({ ...this.config, ...params.config })
     const result = await this.annotate(doc.getText(), config)
-    this.pushCoverageCount(doc, result.covered)
+    this.pushCoverageCount(doc, result.covered, result.stats.bySource)
     return result
   }
 
@@ -354,7 +361,7 @@ export class NASMLanguageServer {
       startLine: params.startLine,
       endLine: params.endLine
     })
-    this.pushCoverageCount(doc, result.covered)
+    this.pushCoverageCount(doc, result.covered, result.stats.bySource)
     return result
   }
 
@@ -385,10 +392,10 @@ export class NASMLanguageServer {
   }
 
   /** 虚拟注释（Inlay Hint 幽灵文字预览，不修改文档；结果按文档版本缓存）。 */
-  private onInlayHints(params: {
+  private async onInlayHints(params: {
     textDocument: { uri: string }
     range: { start: { line: number }; end: { line: number } }
-  }): InlayHint[] {
+  }): Promise<InlayHint[]> {
     if (!this.config.virtual || this.stores === null) {
       return []
     }
@@ -399,7 +406,8 @@ export class NASMLanguageServer {
     let cached = this.virtualCache.get(doc.uri)
     if (cached === undefined || cached.version !== doc.version) {
       const config = resolveConfig({ ...this.config, protectExistingComments: false })
-      const ann = annotateSource(doc.getText(), this.stores, config)
+      // 虚拟层在 LLM 启用时总是增强（supplement/fallback 都先出现在预览中）
+      const ann = await annotateSourceEnhanced(doc.getText(), this.stores, config, this.llm)
       const context = new DocumentContext(ann.lines, ann.abi, this.stores.syscalls)
       cached = {
         version: doc.version,
@@ -521,7 +529,7 @@ export class NASMLanguageServer {
   }
 
   /** 推送注释覆盖率（状态栏展示：规则引擎可注释/已注释行 / 总行数）。 */
-  private pushCoverageCount(doc: TextDocument, covered: number): void {
+  private pushCoverageCount(doc: TextDocument, covered: number, bySource?: Record<string, number>): void {
     const notification: StatsNotificationParams = {
       uri: doc.uri,
       abi: this.abiOf(doc),
@@ -529,7 +537,7 @@ export class NASMLanguageServer {
         totalLines: doc.lineCount,
         commentedLines: covered,
         skippedLines: 0,
-        bySource: { rule: 0, pattern: 0, context: 0, llm: 0, fallback: 0 }
+        bySource: bySource ?? { rule: 0, pattern: 0, context: 0, llm: 0, fallback: 0 }
       }
     }
     void this.connection.sendNotification('nasm-commenter/stats', notification)
@@ -589,6 +597,13 @@ export class NASMLanguageServer {
   }
 
   /** 第一个未注释的指令行（状态栏跳转用；无则返回 null）。 */
+  /** 清空 LLM 缓存（clearLlmCache 命令）。 */
+  private onClearLlmCache(): { cleared: boolean } {
+    this.llm?.clearCache?.()
+    logger.info('LLM 缓存已清空')
+    return { cleared: true }
+  }
+
   private onFirstUnannotated(params: { textDocument: { uri: string } }): { line: number } | null {
     const doc = this.requireDoc(params.textDocument.uri)
     const config = resolveConfig({ ...this.config, protectExistingComments: false })

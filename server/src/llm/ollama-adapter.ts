@@ -13,7 +13,11 @@ export class OllamaAdapter implements LLMAdapter {
   private readonly baseUrl: string
   private readonly cache: CommentCache | null
 
-  constructor(private readonly config: LLMConfig, cache?: CommentCache) {
+  constructor(
+    private readonly config: LLMConfig,
+    cache?: CommentCache,
+    private readonly workspaceKey = ''
+  ) {
     this.baseUrl = (config.baseUrl.length > 0 && config.baseUrl !== 'https://api.openai.com/v1'
       ? config.baseUrl
       : 'http://localhost:11434').replace(/\/+$/, '')
@@ -26,7 +30,7 @@ export class OllamaAdapter implements LLMAdapter {
 
   async generate(request: LLMRequest): Promise<LLMResponse> {
     const cache = this.cache
-    const key = CommentCache.keyOf(request)
+    const key = CommentCache.keyOf(request, this.workspaceKey)
     const cached = cache?.get(key)
     if (cached !== undefined) {
       logger.debug(`LLM 缓存命中 (${this.name}): ${request.instruction}`)
@@ -43,7 +47,7 @@ export class OllamaAdapter implements LLMAdapter {
         body: JSON.stringify({
           model: this.config.model,
           prompt: buildUserPrompt(request),
-          system: buildSystemPrompt(request.language),
+          system: buildSystemPrompt(request.language, request.promptTemplate),
           stream: false,
           options: { temperature: 0.2 }
         }),

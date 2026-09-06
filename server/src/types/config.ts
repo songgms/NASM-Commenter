@@ -20,6 +20,12 @@ export interface LLMConfig {
   timeout: number
   /** 结果缓存 */
   cache: boolean
+  /** LLM 参与方式：supplement=仅虚拟预览 (默认), fallback=写入文件 */
+  augmentMode: 'supplement' | 'fallback'
+  /** 低于该置信度的 LLM 输出被丢弃 */
+  confidenceThreshold: number
+  /** 自定义 system prompt 模板 (空 = 内置) */
+  promptTemplate: string
 }
 
 /** 注释生成配置（客户端读取并同步到 server）。 */

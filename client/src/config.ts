@@ -33,7 +33,10 @@ export function getConfig(): CommentConfig {
       model: cfg.get<string>('llm.model', 'gpt-4o-mini'),
       baseUrl: cfg.get<string>('llm.baseUrl', 'https://api.openai.com/v1'),
       timeout: cfg.get<number>('llm.timeout', 30000),
-      cache: cfg.get<boolean>('llm.cache', true)
+      cache: cfg.get<boolean>('llm.cache', true),
+      augmentMode: cfg.get<'supplement' | 'fallback'>('llm.augmentMode', 'supplement'),
+      confidenceThreshold: cfg.get<number>('llm.confidenceThreshold', 0.7),
+      promptTemplate: cfg.get<string>('llm.promptTemplate', '')
     }
   }
 }

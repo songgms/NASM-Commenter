@@ -28,7 +28,10 @@ export function defaultCommentConfig(): CommentConfig {
       model: 'gpt-4o-mini',
       baseUrl: 'https://api.openai.com/v1',
       timeout: 30000,
-      cache: true
+      cache: true,
+      augmentMode: 'supplement',
+      confidenceThreshold: 0.7,
+      promptTemplate: ''
     }
   }
 }

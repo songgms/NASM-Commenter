@@ -7,6 +7,8 @@ import type { ABI, CommentLanguage, LLMConfig } from '../types'
 export interface LLMRequest {
   /** 助记符（小写） */
   instruction: string
+  /** 自定义 system 提示词（可选） */
+  promptTemplate?: string
   /** 操作数原始文本列表 */
   operands: string[]
   /** 上下文：前后 5 行代码文本 */
@@ -26,6 +28,8 @@ export interface LLMAdapter {
   readonly name: string
   generate(request: LLMRequest): Promise<LLMResponse>
   isAvailable(): boolean
+  /** 清空结果缓存（未实现缓存时为 no-op） */
+  clearCache?(): void
 }
 
 /** Mock 适配器（测试与离线演示用）：固定响应。 */
@@ -47,7 +51,7 @@ export class MockLLMAdapter implements LLMAdapter {
 }
 
 /** 按配置创建适配器；未启用或 provider 未知返回 undefined。openai/ollama 的具体实现在 factory 注册。 */
-export type AdapterFactory = (config: LLMConfig) => LLMAdapter | undefined
+export type AdapterFactory = (config: LLMConfig, workspaceKey?: string) => LLMAdapter | undefined
 
 const registry = new Map<string, AdapterFactory>()
 
@@ -57,10 +61,10 @@ export function registerLLMFactory(provider: string, factory: AdapterFactory): v
 }
 
 /** 创建适配器：未启用 → undefined；无可用实现 → undefined。 */
-export function createLLMAdapter(config: LLMConfig): LLMAdapter | undefined {
+export function createLLMAdapter(config: LLMConfig, workspaceKey?: string): LLMAdapter | undefined {
   if (!config.enabled) {
     return undefined
   }
   const factory = registry.get(config.provider)
-  return factory ? factory(config) : undefined
+  return factory ? factory(config, workspaceKey) : undefined
 }

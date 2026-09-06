@@ -350,11 +350,15 @@ export async function annotateSourceEnhanced(
       operands: line.operands.map((o) => o.raw),
       context: codeContext(rawLines, line.lineNumber),
       abi: base.abi,
-      language: config.language
+      language: config.language,
+      promptTemplate: config.llm.promptTemplate.length > 0 ? config.llm.promptTemplate : undefined
     }
     try {
       const response = await llm.generate(request)
-      if (response.comment.length > 0) {
+      if (
+        response.comment.length > 0 &&
+        response.confidence >= config.llm.confidenceThreshold
+      ) {
         if (existing !== undefined && existing.source === 'fallback') {
           base.stats.bySource.fallback--
         }

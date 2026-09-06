@@ -26,7 +26,11 @@ export class OpenAICompatibleAdapter implements LLMAdapter {
   readonly name = 'openai'
   private readonly cache: CommentCache | null
 
-  constructor(private readonly config: LLMConfig, cache?: CommentCache) {
+  constructor(
+    private readonly config: LLMConfig,
+    cache?: CommentCache,
+    private readonly workspaceKey = ''
+  ) {
     this.cache = config.cache ? (cache ?? new CommentCache()) : null
   }
 
@@ -36,7 +40,7 @@ export class OpenAICompatibleAdapter implements LLMAdapter {
 
   async generate(request: LLMRequest): Promise<LLMResponse> {
     const cache = this.cache
-    const key = CommentCache.keyOf(request)
+    const key = CommentCache.keyOf(request, this.workspaceKey)
     const cached = cache?.get(key)
     if (cached !== undefined) {
       logger.debug(`LLM 缓存命中 (${this.name}): ${request.instruction}`)
@@ -57,7 +61,7 @@ export class OpenAICompatibleAdapter implements LLMAdapter {
         body: JSON.stringify({
           model: this.config.model,
           messages: [
-            { role: 'system', content: buildSystemPrompt(request.language) },
+            { role: 'system', content: buildSystemPrompt(request.language, request.promptTemplate) },
             { role: 'user', content: buildUserPrompt(request) }
           ],
           temperature: 0.2,
@@ -68,6 +72,7 @@ export class OpenAICompatibleAdapter implements LLMAdapter {
       if (!res.ok) {
         throw new Error(`LLM API ${res.status}: ${await res.text()}`)
       }
+      logger.debug(`LLM prompt 片段: ${buildUserPrompt(request).slice(0, 200)}`)
       const data = (await res.json()) as {
         choices?: Array<{ message?: { content?: string } }>
       }

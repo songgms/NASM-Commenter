@@ -40,9 +40,15 @@ function updateForEditor(editor: vscode.TextEditor | undefined): void {
   if (stats === undefined) {
     item.text = '$(comment) NASM'
   } else {
-    const abiLabel = stats.abi === 'linux-x86' ? 'x86' : stats.abi === 'macos-x64' ? 'macOS' : 'x64'
+    const abiLabel =
+      stats.abi === 'linux-x86' ? 'x86' : stats.abi === 'macos-x64' || stats.abi === 'macos-x86' ? 'macOS' : stats.abi === 'freebsd-x64' ? 'FreeBSD' : 'x64'
     item.text = `$(comment) ${stats.stats.commentedLines}/${stats.stats.totalLines} · ${abiLabel}`
-    item.tooltip = `NASM Commenter: 自动注释覆盖 ${stats.stats.commentedLines}/${stats.stats.totalLines} 行 (ABI: ${stats.abi})`
+    const by = stats.stats.bySource
+    const ruleCount = (by.rule ?? 0) + (by.pattern ?? 0) + (by.context ?? 0)
+    item.tooltip =
+      `NASM Commenter: 注释覆盖 ${stats.stats.commentedLines}/${stats.stats.totalLines} 行 (ABI: ${stats.abi})` +
+      `\n规则 ${ruleCount} · LLM ${by.llm ?? 0} · 未注释 ${stats.stats.totalLines - stats.stats.commentedLines}` +
+      '\n点击跳转到第一个未注释行'
   }
   item.show()
 }

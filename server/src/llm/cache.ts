@@ -13,9 +13,9 @@ export class CommentCache {
   ) {}
 
   /** 缓存键：指令 + 操作数 + 上下文 + ABI + 语言。 */
-  static keyOf(request: LLMRequest): string {
+  static keyOf(request: LLMRequest, workspaceKey?: string): string {
     return hashString(
-      `${request.instruction}|${request.operands.join(',')}|${request.context}|${request.abi}|${request.language}`
+      `${workspaceKey ?? ''}|${request.instruction}|${request.operands.join(',')}|${request.context}|${request.abi}|${request.language}`
     )
   }
 

@@ -14,7 +14,7 @@ import { OllamaAdapter } from './ollama-adapter'
 import type { LLMConfig } from '../types'
 
 // Provider 工厂注册（无需修改引擎代码即可扩展新 Provider）
-registerLLMFactory('openai', (config: LLMConfig) => new OpenAICompatibleAdapter(config))
-registerLLMFactory('ollama', (config: LLMConfig) => new OllamaAdapter(config))
+registerLLMFactory('openai', (config: LLMConfig, workspaceKey?: string) => new OpenAICompatibleAdapter(config, undefined, workspaceKey))
+registerLLMFactory('ollama', (config: LLMConfig, workspaceKey?: string) => new OllamaAdapter(config, undefined, workspaceKey))
 
 export { registerLLMFactory, createLLMAdapter }

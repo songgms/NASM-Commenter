@@ -27,7 +27,10 @@ const SYSTEM_PROMPT_EN = [
 ].join('\n')
 
 /** 系统提示词。 */
-export function buildSystemPrompt(language: CommentLanguage): string {
+export function buildSystemPrompt(language: CommentLanguage, customTemplate?: string): string {
+  if (customTemplate !== undefined && customTemplate.trim().length > 0) {
+    return customTemplate
+  }
   return language === 'en' ? SYSTEM_PROMPT_EN : SYSTEM_PROMPT_ZH
 }
 
